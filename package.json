@@ -9,7 +9,7 @@
     "build": "tsc",
     "format": "prettier --write '**/*.ts'",
     "format-check": "prettier --check '**/*.ts'",
-    "lint": "eslint src/**/*.ts",
+    "lint": "eslint --ext .js,.ts src/",
     "package": "ncc build  --license licenses.txt --source-map",
     "test": "jest",
     "all": "yarn build && yarn lint && yarn package && yarn test",
