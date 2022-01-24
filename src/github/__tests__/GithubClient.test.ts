@@ -25,9 +25,6 @@ const defaultTags = [
 describe('GithubClient', () => {
   const githubAdapter = createMockGithubAdapter(defaultTags);
   const githubClient = new GithubClient(githubAdapter);
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
   describe('listSemVerTags', () => {
     it('should load first page', async () => {
       const tags = await githubClient.listSemVerTags(false);

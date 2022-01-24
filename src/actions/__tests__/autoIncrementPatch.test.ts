@@ -26,9 +26,6 @@ describe('autoIncrementPatch', () => {
     listSemVerTags: async () => Promise.resolve(tags),
     createBranch: jest.fn<Promise<void>, [string]>(),
   };
-  beforeEach(() => {
-    jest.resetAllMocks();
-  });
   it('bumps patch version', async () => {
     const newTag = await autoIncrementPatch(githubClient, 'refs/heads/master');
     expect(newTag?.value).toBe('master-1.1.1');
