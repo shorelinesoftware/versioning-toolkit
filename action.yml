@@ -1,0 +1,17 @@
+name: 'versioning-toolkit'
+description: 'Set of helpers for versioning'
+author: 'Shoreline.io'
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
+inputs:
+  githubToken:
+    description: 'github token'
+    required: true
+  branch:
+    description: 'branch'
+    required: true
+    default: 'master'
+  actionName:
+    description: 'action name'
+    required: true
