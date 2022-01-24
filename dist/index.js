@@ -11676,7 +11676,15 @@ class Tag {
         return prevTag;
     }
     static parse(tagOrBranch) {
-        const [prefix, version, prerelease] = tagOrBranch.split('-');
+        const versionStartRegexp = /-\d+\./;
+        const versionAndPrereleaseStartIndex = tagOrBranch.search(versionStartRegexp);
+        if (versionAndPrereleaseStartIndex === -1) {
+            return undefined;
+        }
+        const [version, prerelease] = tagOrBranch
+            .substring(versionAndPrereleaseStartIndex + 1)
+            .split('-');
+        const prefix = tagOrBranch.substring(0, versionAndPrereleaseStartIndex);
         if (version == null || prefix == null) {
             return undefined;
         }
@@ -11686,7 +11694,7 @@ class Tag {
         }
         let semVer = coercedVersion;
         if (prerelease != null) {
-            semVer = (0,semver.parse)([version, prerelease].join('-'));
+            semVer = (0,semver.parse)([coercedVersion.raw, prerelease].join('-'));
         }
         if (semVer == null) {
             return undefined;

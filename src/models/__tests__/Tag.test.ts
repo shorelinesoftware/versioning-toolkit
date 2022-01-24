@@ -1,6 +1,10 @@
 import { Tag } from '../Tag';
 
 const tags = [
+  Tag.parse('feature-foo-0.0.1'),
+  Tag.parse('feature-foo-0.0.0-abc'),
+  Tag.parse('feature-foo-bar-0.0.0-abc'),
+  Tag.parse('feature-foo-bar-0.0.0-0.0'),
   Tag.parse('master-0.0.0'),
   Tag.parse('master-0.1.1'),
   Tag.parse('master-0.1.0'),
@@ -56,7 +60,15 @@ describe('Tag', () => {
       },
       {
         tagOrBranch: 'master-1.1.0-abc',
-        expected: new Tag('master-1.1.0-abc'),
+        expected: new Tag({ version: '1.1.0-abc', prefix: 'master' }),
+      },
+      {
+        tagOrBranch: 'feature-foo-1.1.0-abc',
+        expected: new Tag('feature-foo-1.1.0-abc'),
+      },
+      {
+        tagOrBranch: 'feature-foo-bar-1.1.0-abc',
+        expected: new Tag('feature-foo-bar-1.1.0-abc'),
       },
     ])('parses tag($tagOrBranch)', ({ tagOrBranch, expected }) => {
       const actual = Tag.parse(tagOrBranch);
@@ -68,8 +80,16 @@ describe('Tag', () => {
         expected: 'master-0.0.0',
       },
       {
-        tagOrBranch: 'master-0',
-        expected: 'master-0.0.0',
+        tagOrBranch: 'feature-foo-0.0',
+        expected: 'feature-foo-0.0.0',
+      },
+      {
+        tagOrBranch: 'feature-fix-500-1.1',
+        expected: 'feature-fix-500-1.1.0',
+      },
+      {
+        tagOrBranch: 'feature-fix-500-1.1-abc',
+        expected: 'feature-fix-500-1.1.0-abc',
       },
       {
         tagOrBranch: 'feature-1.0',
@@ -93,6 +113,10 @@ describe('Tag', () => {
       },
       {
         tagOrBranch: '1.1.0',
+        expected: undefined,
+      },
+      {
+        tagOrBranch: 'master-1',
         expected: undefined,
       },
       {

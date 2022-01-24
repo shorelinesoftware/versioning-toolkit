@@ -126,7 +126,16 @@ export class Tag {
   }
 
   static parse(tagOrBranch: string): Tag | undefined {
-    const [prefix, version, prerelease] = tagOrBranch.split('-');
+    const versionStartRegexp = /-\d+\./;
+    const versionAndPrereleaseStartIndex =
+      tagOrBranch.search(versionStartRegexp);
+    if (versionAndPrereleaseStartIndex === -1) {
+      return undefined;
+    }
+    const [version, prerelease] = tagOrBranch
+      .substring(versionAndPrereleaseStartIndex + 1)
+      .split('-');
+    const prefix = tagOrBranch.substring(0, versionAndPrereleaseStartIndex);
     if (version == null || prefix == null) {
       return undefined;
     }
@@ -137,7 +146,7 @@ export class Tag {
     }
     let semVer: SemVer | null = coercedVersion;
     if (prerelease != null) {
-      semVer = parse([version, prerelease].join('-'));
+      semVer = parse([coercedVersion.raw, prerelease].join('-'));
     }
     if (semVer == null) {
       return undefined;
