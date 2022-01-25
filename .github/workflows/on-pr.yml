@@ -28,10 +28,13 @@ jobs:
         run: yarn test && yarn lint
 
       - name: make prerelease version
+        id: make_prerelease_tag
         uses: ./
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           prefix: ${{ github.head_ref }}
           actionName: 'makePrerelease'
+      - name: output tag
+        run: 'echo ${{ steps.make_prerelease_tag.outputs.NEW_TAG }}'
 
