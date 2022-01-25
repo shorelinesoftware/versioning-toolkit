@@ -4,12 +4,14 @@ import {
   setOutput as setOutputFn,
   setFailed as setFailedFn,
 } from '@actions/core';
+import { context } from '@actions/github';
 
 export type ActionAdapter = {
   getInput: typeof getInputFn;
   info: typeof infoFn;
   setOutput: typeof setOutputFn;
   setFailed: typeof setFailedFn;
+  sha: string;
 };
 
 export function getActionAdapter(): ActionAdapter {
@@ -18,5 +20,6 @@ export function getActionAdapter(): ActionAdapter {
     info: infoFn,
     setOutput: setOutputFn,
     setFailed: setFailedFn,
+    sha: context.sha,
   };
 }

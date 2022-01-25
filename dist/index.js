@@ -4392,7 +4392,7 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 var Stream = _interopDefault(__nccwpck_require__(2781));
 var http = _interopDefault(__nccwpck_require__(3685));
 var Url = _interopDefault(__nccwpck_require__(7310));
-var whatwgUrl = _interopDefault(__nccwpck_require__(629));
+var whatwgUrl = _interopDefault(__nccwpck_require__(3323));
 var https = _interopDefault(__nccwpck_require__(5687));
 var zlib = _interopDefault(__nccwpck_require__(9796));
 
@@ -6868,7 +6868,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 629:
+/***/ 3323:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -9685,7 +9685,7 @@ module.exports = {
   validRange: __nccwpck_require__(2098),
   outside: __nccwpck_require__(420),
   gtr: __nccwpck_require__(9380),
-  ltr: __nccwpck_require__(3323),
+  ltr: __nccwpck_require__(8726),
   intersects: __nccwpck_require__(7008),
   simplifyRange: __nccwpck_require__(5297),
   subset: __nccwpck_require__(7863),
@@ -9996,7 +9996,7 @@ module.exports = intersects
 
 /***/ }),
 
-/***/ 3323:
+/***/ 8726:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const outside = __nccwpck_require__(420)
@@ -11522,6 +11522,7 @@ var Inputs;
 (function (Inputs) {
     Inputs["branch"] = "branch";
     Inputs["actionName"] = "actionName";
+    Inputs["prefix"] = "prefix";
 })(Inputs || (Inputs = {}));
 
 ;// CONCATENATED MODULE: ./lib/actions/action.js
@@ -11529,25 +11530,31 @@ var Inputs;
 class Action {
     _githubClient;
     _actionAdapter;
-    _actionDictionary;
-    constructor(githubClient, actionsAdapter, actionDictionary) {
+    _actions;
+    constructor(githubClient, actionsAdapter, actions) {
         this._actionAdapter = actionsAdapter;
         this._githubClient = githubClient;
-        this._actionDictionary = actionDictionary;
+        this._actions = actions;
     }
     async run() {
         const { setFailed, info, getInput, setOutput } = this._actionAdapter;
         try {
             const actionName = getInput(Inputs.actionName, { required: true });
-            const branch = getInput(Inputs.branch, { required: true });
             switch (actionName) {
                 case 'autoIncrementPatch': {
-                    const newTag = await this._actionDictionary.autoIncrementPatch(this._githubClient, branch);
+                    const branch = getInput(Inputs.branch, { required: true });
+                    const newTag = await this._actions.autoIncrementPatch(this._githubClient, branch);
                     if (newTag == null) {
                         info(`can't make a new tag from ${branch}`);
                         return;
                     }
                     info(`pushed new tag ${newTag}`);
+                    setOutput('NEW_TAG', newTag.value);
+                    return;
+                }
+                case 'makePrerelease': {
+                    const prefix = getInput(Inputs.prefix, { required: true });
+                    const newTag = await this._actions.makePrerelease(this._githubClient, prefix, this._actionAdapter.sha);
                     setOutput('NEW_TAG', newTag.value);
                     return;
                 }
@@ -11566,7 +11573,10 @@ class Action {
 
 // EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
 var core = __nccwpck_require__(2186);
+// EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
+var github = __nccwpck_require__(5438);
 ;// CONCATENATED MODULE: ./lib/actions/actionAdapter.js
+
 
 function getActionAdapter() {
     return {
@@ -11574,6 +11584,7 @@ function getActionAdapter() {
         info: core.info,
         setOutput: core.setOutput,
         setFailed: core.setFailed,
+        sha: github.context.sha,
     };
 }
 
@@ -11723,8 +11734,12 @@ async function autoIncrementPatch(githubClient, branch) {
     return newTag;
 }
 
-// EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
-var github = __nccwpck_require__(5438);
+;// CONCATENATED MODULE: ./lib/actions/makePrerelease.js
+
+async function makePrerelease(githubClient, tagPrefix, sha) {
+    return new Tag({ prefix: tagPrefix, version: `0.0.1-${sha}` });
+}
+
 ;// CONCATENATED MODULE: ./lib/github/gihubAdapter.js
 
 function getGithubAdapter(githubToken) {
@@ -11789,6 +11804,7 @@ function createGithubClient(githubToken) {
 
 
 
+
 async function run() {
     const actionAdapter = getActionAdapter();
     try {
@@ -11799,6 +11815,7 @@ async function run() {
         const github = createGithubClient(githubToken);
         const actionDictionary = {
             autoIncrementPatch: autoIncrementPatch,
+            makePrerelease: makePrerelease,
         };
         const action = new Action(github, actionAdapter, actionDictionary);
         await action.run();
