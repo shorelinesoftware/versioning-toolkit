@@ -1,7 +1,6 @@
-name: 'CI'
-on: # rebuild any PRs and main branch changes
+name: 'on-pr'
+on:
   pull_request:
-  push:
     branches:
       - '**'
 jobs:
@@ -28,11 +27,11 @@ jobs:
       - name: Test and Lint
         run: yarn test && yarn lint
 
-      - name: Auto increment version
+      - name: make prerelease version
         uses: ./
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          branch: ${{ github.ref }}
-          actionName: 'autoIncrementPatch'
+          prefix: ${{ github.head_ref }}
+          actionName: 'makePrerelease'
 
