@@ -3,7 +3,13 @@ import { Tag } from '../../models/Tag';
 import { makePrerelease } from '../makePrerelease';
 
 describe('makePrerelease', () => {
-  const tags: Tag[] = [];
+  const tags: Tag[] = [
+    new Tag('stable-2.2.1'),
+    new Tag('stable-2.2.2'),
+    new Tag('stable-2.2.3'),
+    new Tag('stable-2.3.0'),
+    new Tag('stable-2.3.1'),
+  ];
   const sha = '1ae1b19044adfe98998f4e1ab04da2e698cce6df';
   const shortSha = '1ae1b19';
 
@@ -31,6 +37,10 @@ describe('makePrerelease', () => {
     expect(githubClient.createTag).not.toBeCalled();
   });
   it.each([
+    {
+      prefix: 'refs/heads/stable',
+      expected: `stable-2.3.1-${shortSha}`,
+    },
     {
       prefix: 'refs/heads/feature-1.0',
       expected: `feature-1.0.0-${shortSha}`,
