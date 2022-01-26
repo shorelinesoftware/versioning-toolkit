@@ -2,19 +2,28 @@ import { IGithubClient } from '../github/GithubClient';
 import { Tag } from '../models/Tag';
 import { getBranchName } from '../utils';
 
-export async function autoIncrementPatch(
-  githubClient: IGithubClient,
-  branch: string,
-) {
+export type AutoIncrementPatchParams = {
+  githubClient: IGithubClient;
+  branch: string;
+  pushTag: boolean;
+};
+
+export async function autoIncrementPatch({
+  branch,
+  githubClient,
+  pushTag,
+}: AutoIncrementPatchParams) {
   const tags = await githubClient.listSemVerTags();
   const branchName = getBranchName(branch);
 
-  const prevTag = Tag.getHighestTagOrDefault(tags, branchName);
+  const prevTag = Tag.getHighestTagOrDefaultWithPrefix(tags, branchName);
   if (prevTag == null) {
     return undefined;
   }
   const newTag = prevTag.bumpPatchSegment();
-  await githubClient.createTag(newTag);
+  if (pushTag) {
+    await githubClient.createTag(newTag);
+  }
   return newTag;
 }
 

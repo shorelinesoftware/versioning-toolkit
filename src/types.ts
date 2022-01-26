@@ -2,6 +2,7 @@ export enum Inputs {
   branch = 'branch',
   actionName = 'actionName',
   prefix = 'prefix',
+  pushTag = 'pushTag',
 }
 
 export type ActionName = 'autoIncrementPatch' | 'makePrerelease';

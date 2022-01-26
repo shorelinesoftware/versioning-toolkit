@@ -42,6 +42,12 @@ describe('Tag', () => {
     expect(() => new Tag({ prefix: 'master', version: 'master' })).toThrow(
       `master can't be parsed into a version`,
     );
+    expect(() => new Tag({ prefix: '', version: '' })).toThrow(
+      `missing prefix`,
+    );
+    expect(() => new Tag({ prefix: '1', version: '' })).toThrow(
+      `missing version`,
+    );
   });
 
   describe('parse', () => {
@@ -123,6 +129,10 @@ describe('Tag', () => {
         tagOrBranch: '1',
         expected: undefined,
       },
+      {
+        tagOrBranch: '',
+        expected: undefined,
+      },
     ])(
       'returns undefined if can not parse ($tagOrBranch)',
       ({ tagOrBranch, expected }) => {
@@ -174,16 +184,23 @@ describe('Tag', () => {
 
   describe('getHighestTagOrDefault', () => {
     it('should return default tag by prefix', () => {
-      const tag = Tag.getHighestTagOrDefault(tags, 'feature');
+      const tag = Tag.getHighestTagOrDefaultWithPrefix(tags, 'feature');
       expect(tag?.value).toBe('feature-0.0.0');
     });
     it('should return default tag if no tags found', () => {
-      const tag = Tag.getHighestTagOrDefault(tags, new Tag('feature-1.0.1'));
+      const tag = Tag.getHighestTagOrDefaultWithPrefix(
+        tags,
+        new Tag('feature-1.0.1'),
+      );
       expect(tag?.value).toBe('feature-1.0.1');
     });
     it('should return tag with the highest version', () => {
-      const tag = Tag.getHighestTagOrDefault(tags);
+      const tag = Tag.getHighestTagOrDefaultWithPrefix(tags);
       expect(tag?.value).toBe('stable-2.3.1');
+    });
+    it('should return undefined if no tags and prefix', () => {
+      const tag = Tag.getHighestTagOrDefaultWithPrefix([]);
+      expect(tag).toBe(undefined);
     });
   });
 

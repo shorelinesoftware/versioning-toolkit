@@ -21,38 +21,70 @@ describe('autoIncrementPatch', () => {
     new Tag('stable-0.1.0'),
   ];
 
-  const githubClient: IGithubClient = {
+  const defaultGithubClient: IGithubClient = {
     createTag: jest.fn<Promise<void>, [Tag]>(),
     listSemVerTags: async () => Promise.resolve(tags),
     createBranch: jest.fn<Promise<void>, [string]>(),
   };
   it('bumps patch version', async () => {
-    const newTag = await autoIncrementPatch(githubClient, 'refs/heads/master');
+    const newTag = await autoIncrementPatch({
+      githubClient: defaultGithubClient,
+      branch: 'refs/heads/master',
+      pushTag: false,
+    });
     expect(newTag?.value).toBe('master-1.1.1');
   });
-  it('bumps patch version of specific branch', async () => {
-    const newTag = await autoIncrementPatch(
+  it('returns undefined if cannot bump tag', async () => {
+    const githubClient: IGithubClient = {
+      createTag: jest.fn<Promise<void>, [Tag]>(),
+      listSemVerTags: async () => Promise.resolve([]),
+      createBranch: jest.fn<Promise<void>, [string]>(),
+    };
+    const newTag = await autoIncrementPatch({
       githubClient,
-      'refs/heads/stable-2.3',
-    );
+      branch: '',
+      pushTag: false,
+    });
+    expect(newTag).toBe(undefined);
+  });
+  it('bumps patch version of specific branch', async () => {
+    const newTag = await autoIncrementPatch({
+      githubClient: defaultGithubClient,
+      branch: 'refs/heads/stable-2.3',
+      pushTag: false,
+    });
     expect(newTag?.value).toBe('stable-2.3.2');
   });
-  it('creates new tag with initial patch version ', async () => {
-    const newTag = await autoIncrementPatch(githubClient, 'refs/heads/feature');
+  it('creates initial tag and bumps patch version when no previous tags', async () => {
+    const newTag = await autoIncrementPatch({
+      githubClient: defaultGithubClient,
+      branch: 'refs/heads/feature',
+      pushTag: false,
+    });
     expect(newTag?.value).toBe('feature-0.0.1');
   });
   it('creates new tag with initial patch version when tag like branch name', async () => {
-    const newTag = await autoIncrementPatch(
-      githubClient,
-      'refs/heads/feature-1.0',
-    );
+    const newTag = await autoIncrementPatch({
+      githubClient: defaultGithubClient,
+      branch: 'refs/heads/feature-1.0',
+      pushTag: false,
+    });
     expect(newTag?.value).toBe('feature-1.0.1');
   });
-  it('pushes new tag', async () => {
-    const newTag = await autoIncrementPatch(
-      githubClient,
-      'refs/heads/feature-1.0',
-    );
-    expect(githubClient.createTag).toHaveBeenCalledWith(newTag);
+  it('pushes new tag when pushTag is true', async () => {
+    const newTag = await autoIncrementPatch({
+      githubClient: defaultGithubClient,
+      branch: 'refs/heads/feature-1.0',
+      pushTag: true,
+    });
+    expect(defaultGithubClient.createTag).toHaveBeenCalledWith(newTag);
+  });
+  it('does not push new tag when pushTag is false', async () => {
+    await autoIncrementPatch({
+      githubClient: defaultGithubClient,
+      branch: 'refs/heads/feature-1.0',
+      pushTag: false,
+    });
+    expect(defaultGithubClient.createTag).not.toBeCalled();
   });
 });

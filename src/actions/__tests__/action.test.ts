@@ -34,6 +34,8 @@ describe('action', () => {
                 return 'autoIncrementPatch';
               case Inputs.branch:
                 return 'master';
+              case Inputs.pushTag:
+                return 'true';
               default:
                 throw new Error('Input not found');
             }
@@ -72,13 +74,15 @@ describe('action', () => {
 
     describe('runs autoIncrementPatch', () => {
       const branch = 'master';
-      const actionAdapter = getActionAdapter(
+      const defaultActionAdapter = getActionAdapter(
         jest.fn((name) => {
           switch (name as Inputs) {
             case Inputs.actionName:
               return 'autoIncrementPatch';
             case Inputs.branch:
               return branch;
+            case Inputs.pushTag:
+              return 'false';
             default:
               throw new Error('Input not found');
           }
@@ -92,12 +96,13 @@ describe('action', () => {
           makePrerelease: jest.fn(),
         };
 
-        const action = new Action(githubClient, actionAdapter, actions);
+        const action = new Action(githubClient, defaultActionAdapter, actions);
         await action.run();
-        expect(actions.autoIncrementPatch).toHaveBeenCalledWith(
+        expect(actions.autoIncrementPatch).toHaveBeenCalledWith({
           githubClient,
           branch,
-        );
+          pushTag: false,
+        });
         expect(actions.makePrerelease).not.toBeCalled();
       });
       it('and sets output when tag is returned', async () => {
@@ -109,14 +114,11 @@ describe('action', () => {
           ),
         };
 
-        const action = new Action(githubClient, actionAdapter, actions);
+        const action = new Action(githubClient, defaultActionAdapter, actions);
         await action.run();
-        expect(actionAdapter.setOutput).toHaveBeenCalledWith(
+        expect(defaultActionAdapter.setOutput).toHaveBeenCalledWith(
           'NEW_TAG',
           tag.value,
-        );
-        expect(actionAdapter.info).toHaveBeenCalledWith(
-          `pushed new tag ${tag.value}`,
         );
       });
       it('and informs when tag is not returned', async () => {
@@ -125,10 +127,52 @@ describe('action', () => {
           autoIncrementPatch: jest.fn(async () => Promise.resolve(undefined)),
         };
 
+        const action = new Action(githubClient, defaultActionAdapter, actions);
+        await action.run();
+        expect(defaultActionAdapter.info).toHaveBeenCalledWith(
+          `can't make a new tag from ${branch}`,
+        );
+      });
+      it('and informs about new tag', async () => {
+        const tag = new Tag('master-1.1.0');
+        const actions: Actions = {
+          ...defaultActions,
+          autoIncrementPatch: jest.fn(async () => Promise.resolve(tag)),
+        };
+
+        const action = new Action(githubClient, defaultActionAdapter, actions);
+        await action.run();
+        expect(defaultActionAdapter.info).toHaveBeenCalledWith(
+          `new tag: ${tag}`,
+        );
+      });
+      it('and informs if new tag was pushed', async () => {
+        const tag = new Tag('master-1.1.0');
+        const actions: Actions = {
+          ...defaultActions,
+          autoIncrementPatch: jest.fn(async () => Promise.resolve(tag)),
+        };
+
+        const actionAdapter = getActionAdapter(
+          jest.fn((name) => {
+            switch (name as Inputs) {
+              case Inputs.actionName:
+                return 'autoIncrementPatch';
+              case Inputs.branch:
+                return branch;
+              case Inputs.pushTag:
+                return 'true';
+              default:
+                throw new Error('Input not found');
+            }
+          }),
+        );
+
         const action = new Action(githubClient, actionAdapter, actions);
         await action.run();
-        expect(actionAdapter.info).toHaveBeenCalledWith(
-          `can't make a new tag from ${branch}`,
+        expect(actionAdapter.info).toHaveBeenNthCalledWith(
+          2,
+          `pushed new tag ${tag.value}`,
         );
       });
     });
@@ -136,7 +180,7 @@ describe('action', () => {
     describe('runs makePrerelease', () => {
       const tag = new Tag('master-1.1.0-abc');
       const branch = 'master';
-      const actionAdapter = getActionAdapter(
+      const defaultActionAdapter = getActionAdapter(
         jest.fn((name) => {
           switch (name as Inputs) {
             case Inputs.actionName:
@@ -145,6 +189,8 @@ describe('action', () => {
               return branch;
             case Inputs.prefix:
               return branch;
+            case Inputs.pushTag:
+              return 'false';
             default:
               throw new Error('Input not found');
           }
@@ -156,13 +202,14 @@ describe('action', () => {
           makePrerelease: jest.fn(async () => Promise.resolve(tag)),
         };
 
-        const action = new Action(githubClient, actionAdapter, actions);
+        const action = new Action(githubClient, defaultActionAdapter, actions);
         await action.run();
-        expect(actions.makePrerelease).toHaveBeenCalledWith(
+        expect(actions.makePrerelease).toHaveBeenCalledWith({
           githubClient,
-          'master',
-          'abc',
-        );
+          tagPrefix: 'master',
+          sha: 'abc',
+          pushTag: false,
+        });
         expect(actions.autoIncrementPatch).not.toBeCalled();
       });
       it('and sets output when tag is returned', async () => {
@@ -171,11 +218,53 @@ describe('action', () => {
           makePrerelease: jest.fn(async () => Promise.resolve(tag)),
         };
 
-        const action = new Action(githubClient, actionAdapter, actions);
+        const action = new Action(githubClient, defaultActionAdapter, actions);
         await action.run();
-        expect(actionAdapter.setOutput).toHaveBeenCalledWith(
+        expect(defaultActionAdapter.setOutput).toHaveBeenCalledWith(
           'NEW_TAG',
           tag.value,
+        );
+      });
+      it('and informs about new tag', async () => {
+        const actions: Actions = {
+          ...defaultActions,
+          makePrerelease: jest.fn(async () => Promise.resolve(tag)),
+        };
+
+        const action = new Action(githubClient, defaultActionAdapter, actions);
+        await action.run();
+        expect(defaultActionAdapter.info).toHaveBeenCalledWith(
+          `new tag: ${tag}`,
+        );
+      });
+      it('and informs if new tag was pushed', async () => {
+        const actions: Actions = {
+          ...defaultActions,
+          makePrerelease: jest.fn(async () => Promise.resolve(tag)),
+        };
+
+        const actionAdapter = getActionAdapter(
+          jest.fn((name) => {
+            switch (name as Inputs) {
+              case Inputs.actionName:
+                return 'makePrerelease';
+              case Inputs.branch:
+                return branch;
+              case Inputs.pushTag:
+                return 'true';
+              case Inputs.prefix:
+                return branch;
+              default:
+                throw new Error('Input not found');
+            }
+          }),
+        );
+
+        const action = new Action(githubClient, actionAdapter, actions);
+        await action.run();
+        expect(actionAdapter.info).toHaveBeenNthCalledWith(
+          2,
+          `pushed new tag ${tag.value}`,
         );
       });
     });

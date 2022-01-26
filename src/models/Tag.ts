@@ -22,6 +22,12 @@ export class Tag {
       this._prefix = tag.prefix;
       return;
     }
+    if (!args.prefix) {
+      throw new Error(`missing prefix`);
+    }
+    if (!args.version) {
+      throw new Error(`missing version`);
+    }
     try {
       this._semVer = new SemVer(args.version);
     } catch {
@@ -115,7 +121,7 @@ export class Tag {
     return getHigestTagByTag(prefixOrTag);
   }
 
-  static getHighestTagOrDefault(
+  static getHighestTagOrDefaultWithPrefix(
     tags: Tag[],
     defaultPrefixOrTag?: string | Tag,
   ) {
@@ -125,6 +131,9 @@ export class Tag {
         const tag = Tag.parse(defaultPrefixOrTag);
         if (tag != null) {
           return tag;
+        }
+        if (!defaultPrefixOrTag) {
+          return undefined;
         }
         return new Tag({ prefix: defaultPrefixOrTag, version: '0.0.0' });
       }
@@ -144,7 +153,7 @@ export class Tag {
       .substring(versionAndPrereleaseStartIndex + 1)
       .split('-');
     const prefix = tagOrBranch.substring(0, versionAndPrereleaseStartIndex);
-    if (version == null || prefix == null) {
+    if (!version || !prefix) {
       return undefined;
     }
 

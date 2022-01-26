@@ -12,6 +12,24 @@ describe('makePrerelease', () => {
     listSemVerTags: async () => Promise.resolve(tags),
     createBranch: jest.fn<Promise<void>, [string]>(),
   };
+  it('pushes new tag when pushTag is true', async () => {
+    const newTag = await makePrerelease({
+      githubClient,
+      tagPrefix: 'refs/heads/feature-1.0',
+      sha,
+      pushTag: true,
+    });
+    expect(githubClient.createTag).toHaveBeenCalledWith(newTag);
+  });
+  it('does not push new tag when pushTag is false', async () => {
+    await makePrerelease({
+      githubClient,
+      tagPrefix: 'refs/heads/feature-1.0',
+      sha,
+      pushTag: false,
+    });
+    expect(githubClient.createTag).not.toBeCalled();
+  });
   it.each([
     {
       prefix: 'refs/heads/feature-1.0',
@@ -30,10 +48,25 @@ describe('makePrerelease', () => {
       expected: `stable-3.0.0-${shortSha}`,
     },
   ])(
-    'makes prerelease tag $expected from prefix $prefix',
+    `makes prerelease tag $expected from prefix $prefix and sha ${sha}`,
     async ({ prefix, expected }) => {
-      const tag = await makePrerelease(githubClient, prefix, sha);
+      const tag = await makePrerelease({
+        githubClient,
+        tagPrefix: prefix,
+        sha,
+        pushTag: false,
+      });
       expect(tag.value).toBe(expected);
     },
   );
+  it('throws exception when missing prefix', async () => {
+    expect(async () =>
+      makePrerelease({
+        githubClient,
+        tagPrefix: '',
+        sha,
+        pushTag: false,
+      }),
+    ).rejects.toThrow();
+  });
 });
