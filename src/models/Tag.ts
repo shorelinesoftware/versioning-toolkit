@@ -74,6 +74,14 @@ export class Tag {
     return `${this.prefix}-${this._semVer.major}.${this._semVer.minor}`;
   }
 
+  isDefault() {
+    return (
+      this._semVer.major === 0 &&
+      this._semVer.minor === 0 &&
+      this._semVer.patch === 0
+    );
+  }
+
   static getHighestTag(
     tags: Tag[],
     prefixOrTag?: string | Tag,

@@ -11648,6 +11648,11 @@ class Tag {
     createBranch() {
         return `${this.prefix}-${this._semVer.major}.${this._semVer.minor}`;
     }
+    isDefault() {
+        return (this._semVer.major === 0 &&
+            this._semVer.minor === 0 &&
+            this._semVer.patch === 0);
+    }
     static getHighestTag(tags, prefixOrTag) {
         if (!prefixOrTag) {
             tags.sort(tagComparer);
@@ -11736,10 +11741,24 @@ async function autoIncrementPatch(githubClient, branch) {
 
 ;// CONCATENATED MODULE: ./lib/actions/makePrerelease.js
 
+
 async function makePrerelease(githubClient, tagPrefix, sha) {
+    const tags = await githubClient.listSemVerTags();
+    const branchNameOrPrefix = getBranchName(tagPrefix);
+    const shortSha = sha.substring(0, 7);
+    let prevTag = Tag.getHighestTagOrDefault(tags, branchNameOrPrefix);
+    if (prevTag == null) {
+        return new Tag({
+            prefix: branchNameOrPrefix,
+            version: `0.0.1-${shortSha}`,
+        });
+    }
+    if (prevTag.isDefault()) {
+        prevTag = prevTag.bumpPatchSegment();
+    }
     return new Tag({
-        prefix: tagPrefix,
-        version: `0.0.1-${sha.substring(0, 7)}`,
+        prefix: prevTag.prefix,
+        version: `${prevTag.version}-${shortSha}`,
     });
 }
 

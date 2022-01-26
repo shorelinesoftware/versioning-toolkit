@@ -157,6 +157,21 @@ describe('Tag', () => {
     });
   });
 
+  describe('isDefault', () => {
+    it('returns true for tag with version 0.0.0', () => {
+      expect(new Tag('master-0.0.0').isDefault()).toBe(true);
+    });
+    it('returns false for tag with version bigger than 0.0.0', () => {
+      expect(new Tag('master-0.0.1').isDefault()).toBe(false);
+    });
+    it('returns false for tag with version bigger or equal than 0.1.0', () => {
+      expect(new Tag('master-0.1.0').isDefault()).toBe(false);
+    });
+    it('returns false for tag with version bigger or equal than 1.0.0', () => {
+      expect(new Tag('master-1.0.0').isDefault()).toBe(false);
+    });
+  });
+
   describe('getHighestTagOrDefault', () => {
     it('should return default tag by prefix', () => {
       const tag = Tag.getHighestTagOrDefault(tags, 'feature');
