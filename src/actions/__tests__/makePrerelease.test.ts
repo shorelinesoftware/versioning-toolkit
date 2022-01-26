@@ -70,13 +70,13 @@ describe('makePrerelease', () => {
     },
   );
   it('throws exception when missing prefix', async () => {
-    expect(async () =>
+    await expect(async () =>
       makePrerelease({
         githubClient,
         tagPrefix: '',
         sha,
         pushTag: false,
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow('missing tagPrefix');
   });
 });

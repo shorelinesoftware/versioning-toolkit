@@ -15,15 +15,14 @@ export async function makePrerelease({
   sha,
   tagPrefix,
 }: MakePrereleaseParams) {
+  if (!tagPrefix) {
+    throw new Error('missing tagPrefix');
+  }
   const tags = await githubClient.listSemVerTags();
   const branchNameOrPrefix = getBranchName(tagPrefix);
   const shortSha = sha.substring(0, 7);
-  let prevTag =
-    Tag.getHighestTagOrDefaultWithPrefix(tags, branchNameOrPrefix) ??
-    new Tag({
-      prefix: branchNameOrPrefix,
-      version: `0.0.0`,
-    });
+  let prevTag = Tag.getHighestTagOrDefaultWithPrefix(tags, branchNameOrPrefix);
+
   if (prevTag?.isDefault()) {
     prevTag = prevTag.bumpPatchSegment();
   }

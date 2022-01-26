@@ -123,6 +123,16 @@ export class Tag {
 
   static getHighestTagOrDefaultWithPrefix(
     tags: Tag[],
+    defaultPrefixOrTag?: never,
+  ): Tag | undefined;
+
+  static getHighestTagOrDefaultWithPrefix(
+    tags: Tag[],
+    defaultPrefixOrTag: string | Tag,
+  ): Tag;
+
+  static getHighestTagOrDefaultWithPrefix(
+    tags: Tag[],
     defaultPrefixOrTag?: string | Tag,
   ) {
     const prevTag = this.getHighestTag(tags, defaultPrefixOrTag);

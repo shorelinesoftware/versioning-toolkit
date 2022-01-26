@@ -45,6 +45,8 @@
       "no-shadow": "off",
       "semi": "off",
       "camelcase": "off",
+      "no-dupe-class-members": "off",
+      "@typescript-eslint/no-dupe-class-members": ["error"],
       "@typescript-eslint/prefer-enum-initializers": "error",
       "@typescript-eslint/no-unused-vars": "error",
       "@typescript-eslint/explicit-member-accessibility": ["error", {"accessibility": "no-public"}],
