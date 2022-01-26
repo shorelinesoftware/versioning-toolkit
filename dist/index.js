@@ -11737,7 +11737,10 @@ async function autoIncrementPatch(githubClient, branch) {
 ;// CONCATENATED MODULE: ./lib/actions/makePrerelease.js
 
 async function makePrerelease(githubClient, tagPrefix, sha) {
-    return new Tag({ prefix: tagPrefix, version: `0.0.1-${sha}` });
+    return new Tag({
+        prefix: tagPrefix,
+        version: `0.0.1-${sha.substring(0, 7)}`,
+    });
 }
 
 ;// CONCATENATED MODULE: ./lib/github/gihubAdapter.js
