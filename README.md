@@ -1,33 +1,36 @@
 <p align="center">
-  <a href="https://github.com/shorelinesoftware/versioning-toolkit"><img alt="typescript-action status" src="https://github.com/shorelinesoftware/versioning-toolkit/workflows/build-test/badge.svg"></a>
+  <a href="https://github.com/shorelinesoftware/versioning-toolkit"><img alt="typescript-action status" src="https://github.com/shorelinesoftware/versioning-toolkit/workflows/on-master/badge.svg"></a>
 </p>
 
 # Versioning-toolkit GitHub action
 
 This action provides a set of helpers for semantic versioning:
 
-1) Auto increment patch version and push new tag
-2) TBD
+1) Auto increment patch version
+2) Make prerelease tag
 
-## Auto increment patch version and push new tag
+# Auto increment patch version
 
-##inputs 
+Finds the latest tag by branch name and increments is patch segment. If there are no previous tags that match the branch, the default tag will be created: {branch}-0.0.1
+
+##Inputs 
 
 ### `branch`
 
 **Required**. The name of the branch. Serves as the filter prefix to find tag with the highest version.  
 For example:
-If there are these tags: master-0.0.1, master-0.0.2, release-1.0.0, release-1.0.1, release-2.0.1 and provided branch is **release-1.0** then the new tag will be **release-1.0.2**.  
-If there are no tags that match the **branch** the tag name will be **{branch}-0.0.1**
+If there are these tags: master-0.0.1, master-0.0.2, release-1.0.0, release-1.0.1, release-1.0.2 and provided branch is `release-1.0` then the new tag will be release-1.0.2.  
+If there are no tags that match the branch the tag will be `{branch}-0.0.1`
 
 ### `actionName`
 
-**Required** The name of the helper method. Must be **autoIncrementPatch**
+**Required**. The name of the method. Must be **autoIncrementPatch**
 
+### `pushTag`
+
+**Optional**. Whether to push new tag or not. Must be **'true' or 'false'**. 'false' by default
 
 ## Usage:
-
-After testing you can [create a v1 tag](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md) to reference the stable and latest V1 action
 
 ```yaml
 uses: shorelinesoftware/versioning-toolkit@v0.0.1
@@ -36,5 +39,48 @@ env:
 with:
   branch: 'master'
   actionName: 'autoIncrementPatch'
+  pushTag: 'true'
   
+```
+
+##Outputs
+
+`NEW_TAG`
+
+The newly created tag.
+
+# make prerelease tag
+
+Makes prerelease tag with the provided prefix. Uses short commit sha as prerelease segment.
+
+##Inputs
+
+
+### `actionName`
+
+**Required**. The name of the method. Must be **makePrerelease**
+
+### `prefix`
+
+**Required**. The prefix that will be used for tag. Can be branch name, PR#, tag or any other string value. First it tries to find tag by prefix with the highest version and use the version. Otherwise, default version is used: 0.0.1. e.g. if the prefix is `release` and there are tags: release-0.0.1, release-0.0.2 then the tag will be `release-0.0.2-{commit_sha}` if prefix is `foo` the tag will be `foo-0.0.1-{commit_sha}`.
+
+### `pushTag`
+
+**Optional** whether to push new tag or not. Must be **'true' or 'false'**. 'false' by default
+
+##Outputs
+
+`NEW_TAG`
+
+The newly created tag.
+
+## Usage:
+
+```yaml
+uses: shorelinesoftware/versioning-toolkit@v0.0.1
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+with:
+  prefix: ${{ github.head_ref }}
+  actionName: 'makePrerelease'
 ```
