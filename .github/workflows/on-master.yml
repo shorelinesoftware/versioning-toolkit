@@ -4,7 +4,7 @@ on: # rebuild any PRs and main branch changes
     branches:
       - 'master'
 jobs:
-  test-and-tag:
+  test-lint-tag:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
