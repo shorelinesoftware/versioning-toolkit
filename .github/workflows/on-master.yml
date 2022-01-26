@@ -34,5 +34,5 @@ jobs:
         with:
           branch: ${{ github.ref }}
           actionName: 'autoIncrementPatch'
-          pushTag: 'true',
+          pushTag: 'true'
 
