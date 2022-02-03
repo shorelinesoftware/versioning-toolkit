@@ -3,6 +3,7 @@ on: # rebuild any PRs and main branch changes
   push:
     branches:
       - 'master'
+      - 'prerelease-*'
 jobs:
   test-lint-tag:
     runs-on: ubuntu-latest

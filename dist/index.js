@@ -11610,6 +11610,7 @@ function getActionAdapter() {
 var semver = __nccwpck_require__(1383);
 ;// CONCATENATED MODULE: ./lib/models/Tag.js
 
+
 function tagComparer(tag1, tag2) {
     return (0,semver.rcompare)(new semver.SemVer(tag1.version), new semver.SemVer(tag2.version));
 }
@@ -11678,6 +11679,8 @@ class Tag {
             this._semVer.patch === 0);
     }
     static getHighestTag(tags, prefixOrTag) {
+        (0,core.info)(tags.map((t) => t.version).join('\n'));
+        (0,core.info)(`prefix ${prefixOrTag}`);
         if (!prefixOrTag) {
             tags.sort(tagComparer);
             return tags[0];
