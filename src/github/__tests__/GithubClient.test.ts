@@ -2,8 +2,8 @@ import { Tag } from '../../models/Tag';
 import { createMockGithubAdapter } from '../../testUtils';
 import { GithubClient } from '../GithubClient';
 
-const TOTAL_TAGS = 2000;
-const PER_PAGE = 1000;
+const PER_PAGE = 100;
+const TOTAL_TAGS = PER_PAGE * 2;
 
 const defaultTags = [
   ...[...new Array(TOTAL_TAGS).keys()].map((_, index) => ({

@@ -39,7 +39,7 @@ export class GithubClient implements IGithubClient {
     fetchedTags: Tag[] = [],
     page = 1,
   ): Promise<Tag[]> {
-    const perPage = 1000;
+    const perPage = 100;
 
     const tagsResponse = await this._githubAdapter.listTags({
       per_page: perPage,

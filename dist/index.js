@@ -11833,7 +11833,7 @@ class GithubClient {
         await this._githubAdapter.createRef(`refs/tags/${tag}`);
     }
     async _listSemVerTags(shouldFetchAllTags = false, fetchedTags = [], page = 1) {
-        const perPage = 1000;
+        const perPage = 100;
         const tagsResponse = await this._githubAdapter.listTags({
             per_page: perPage,
             page,
