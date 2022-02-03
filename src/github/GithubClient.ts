@@ -20,7 +20,7 @@ export class GithubClient implements IGithubClient {
     this._githubAdapter = githubAdapter;
   }
 
-  async listSemVerTags(shouldFetchAllTags = false, page = 1) {
+  async listSemVerTags(shouldFetchAllTags = true, page = 1) {
     return this._listSemVerTags(shouldFetchAllTags, [], page).then(
       (tags) => tags ?? [],
     );
