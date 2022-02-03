@@ -11679,7 +11679,7 @@ class Tag {
             this._semVer.patch === 0);
     }
     static getHighestTag(tags, prefixOrTag) {
-        (0,core.info)(tags.map((t) => t.version).join('\n'));
+        (0,core.info)(tags.join('\n'));
         (0,core.info)(`prefix ${prefixOrTag}`);
         if (!prefixOrTag) {
             tags.sort(tagComparer);
