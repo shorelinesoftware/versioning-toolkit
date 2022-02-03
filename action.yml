@@ -5,13 +5,17 @@ runs:
   using: 'node16'
   main: 'dist/index.js'
 inputs:
-  githubToken:
-    description: 'github token'
-    required: true
   branch:
-    description: 'branch'
-    required: true
-    default: 'master'
+    description: 'Required if action name is autoIncrementPatch'
+    required: false
   actionName:
     description: 'action name'
     required: true
+  prefix:
+    description: 'Required if action name is makePrerelease'
+    required: false
+  pushTag:
+    description: 'push tag or not'
+    required: false
+    default: 'false'
+
