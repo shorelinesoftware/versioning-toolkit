@@ -20,7 +20,7 @@ export class GithubClient implements IGithubClient {
     this._githubAdapter = githubAdapter;
   }
 
-  async listSemVerTags(shouldFetchAllTags = false, page = 1) {
+  async listSemVerTags(shouldFetchAllTags = true, page = 1) {
     return this._listSemVerTags(shouldFetchAllTags, [], page).then(
       (tags) => tags ?? [],
     );
@@ -39,7 +39,7 @@ export class GithubClient implements IGithubClient {
     fetchedTags: Tag[] = [],
     page = 1,
   ): Promise<Tag[]> {
-    const perPage = 1000;
+    const perPage = 100;
 
     const tagsResponse = await this._githubAdapter.listTags({
       per_page: perPage,

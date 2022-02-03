@@ -11610,7 +11610,6 @@ function getActionAdapter() {
 var semver = __nccwpck_require__(1383);
 ;// CONCATENATED MODULE: ./lib/models/Tag.js
 
-
 function tagComparer(tag1, tag2) {
     return (0,semver.rcompare)(new semver.SemVer(tag1.version), new semver.SemVer(tag2.version));
 }
@@ -11679,8 +11678,6 @@ class Tag {
             this._semVer.patch === 0);
     }
     static getHighestTag(tags, prefixOrTag) {
-        (0,core.info)(tags.join('\n'));
-        (0,core.info)(`prefix ${prefixOrTag}`);
         if (!prefixOrTag) {
             tags.sort(tagComparer);
             return tags[0];
@@ -11826,7 +11823,7 @@ class GithubClient {
     constructor(githubAdapter) {
         this._githubAdapter = githubAdapter;
     }
-    async listSemVerTags(shouldFetchAllTags = false, page = 1) {
+    async listSemVerTags(shouldFetchAllTags = true, page = 1) {
         return this._listSemVerTags(shouldFetchAllTags, [], page).then((tags) => tags ?? []);
     }
     async createBranch(branchName) {
@@ -11836,7 +11833,7 @@ class GithubClient {
         await this._githubAdapter.createRef(`refs/tags/${tag}`);
     }
     async _listSemVerTags(shouldFetchAllTags = false, fetchedTags = [], page = 1) {
-        const perPage = 1000;
+        const perPage = 100;
         const tagsResponse = await this._githubAdapter.listTags({
             per_page: perPage,
             page,

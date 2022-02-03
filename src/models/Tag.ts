@@ -1,4 +1,3 @@
-import { info } from '@actions/core';
 import { ReleaseType, SemVer, cmp, coerce, parse, rcompare } from 'semver';
 
 type TagArguments =
@@ -93,8 +92,6 @@ export class Tag {
     tags: Tag[],
     prefixOrTag?: string | Tag,
   ): Tag | undefined {
-    info(tags.join('\n'));
-    info(`prefix ${prefixOrTag}`);
     if (!prefixOrTag) {
       tags.sort(tagComparer);
       return tags[0];
