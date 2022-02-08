@@ -1,6 +1,7 @@
 import { IGithubClient } from '../github/GithubClient';
 import { Tag } from '../models/Tag';
 import { ActionName, Equals, Inputs } from '../types';
+import { assertUnreachable } from '../utils';
 import { ActionAdapter } from './actionAdapter';
 import { AutoIncrementPatch } from './autoIncrementPatch';
 import { MakePrerelease } from './makePrerelease';
@@ -43,19 +44,21 @@ export class Action {
   async run() {
     const { setFailed, info, getInput } = this._actionAdapter;
     try {
-      const actionName = getInput(Inputs.actionName, { required: true });
+      const actionName = getInput(Inputs.actionName, {
+        required: true,
+      }) as ActionName;
       const pushTag = getInput(Inputs.pushTag, { required: false }) === 'true';
-      switch (actionName as ActionName) {
+      switch (actionName) {
         case 'autoIncrementPatch': {
-          const branch = getInput(Inputs.branch, { required: true });
+          const prefix = getInput(Inputs.prefix, { required: true });
 
           const newTag = await this._actions.autoIncrementPatch({
             githubClient: this._githubClient,
-            branch,
+            prefix,
             pushTag,
           });
           if (newTag == null) {
-            info(`can't make a new tag from ${branch}`);
+            info(`can't make a new tag from ${prefix}`);
             return;
           }
           this.processTag(newTag, pushTag);
@@ -73,7 +76,7 @@ export class Action {
           return;
         }
         default: {
-          throw new Error(`${actionName} is unknown`);
+          assertUnreachable(actionName);
         }
       }
     } catch (error) {

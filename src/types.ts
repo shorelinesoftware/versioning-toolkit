@@ -1,5 +1,4 @@
 export enum Inputs {
-  branch = 'branch',
   actionName = 'actionName',
   prefix = 'prefix',
   pushTag = 'pushTag',

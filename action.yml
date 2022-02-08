@@ -5,14 +5,11 @@ runs:
   using: 'node16'
   main: 'dist/index.js'
 inputs:
-  branch:
-    description: 'Required if action name is autoIncrementPatch'
-    required: false
   actionName:
     description: 'action name'
     required: true
   prefix:
-    description: 'Required if action name is makePrerelease'
+    description: 'prefix to filter tags'
     required: false
   pushTag:
     description: 'push tag or not'

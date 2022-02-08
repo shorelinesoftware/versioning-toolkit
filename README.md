@@ -15,12 +15,12 @@ Finds the latest tag by branch name and increments is patch segment. If there ar
 
 ##Inputs 
 
-### `branch`
+### `prefix`
 
-**Required**. The name of the branch. Serves as the filter prefix to find tag with the highest version.  
+**Required**. The filter to find tag with the highest version by provided prefix.  
 For example:
-If there are these tags: master-0.0.1, master-0.0.2, release-1.0.0, release-1.0.1, release-1.0.2 and provided branch is `release-1.0` then the new tag will be release-1.0.2.  
-If there are no tags that match the branch the tag will be `{branch}-0.0.1`
+If there are these tags: master-0.0.1, master-0.0.2, release-1.0.0, release-1.0.1, release-1.0.2 and provided prefix is `release-1.0` then the new tag will be release-1.0.2.  
+If there are no tags that match the prefix the tag will be `{prefix}-0.0.1`
 
 ### `actionName`
 

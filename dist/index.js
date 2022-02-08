@@ -11520,13 +11520,21 @@ __nccwpck_require__.r(__webpack_exports__);
 ;// CONCATENATED MODULE: ./lib/types.js
 var Inputs;
 (function (Inputs) {
-    Inputs["branch"] = "branch";
     Inputs["actionName"] = "actionName";
     Inputs["prefix"] = "prefix";
     Inputs["pushTag"] = "pushTag";
 })(Inputs || (Inputs = {}));
 
+;// CONCATENATED MODULE: ./lib/utils.js
+function getBranchName(branch) {
+    return branch.replace('refs/heads/', '');
+}
+function assertUnreachable(value) {
+    throw new Error(`${value} should be unreachable`);
+}
+
 ;// CONCATENATED MODULE: ./lib/actions/action.js
+
 
 class Action {
     _githubClient;
@@ -11548,18 +11556,20 @@ class Action {
     async run() {
         const { setFailed, info, getInput } = this._actionAdapter;
         try {
-            const actionName = getInput(Inputs.actionName, { required: true });
+            const actionName = getInput(Inputs.actionName, {
+                required: true,
+            });
             const pushTag = getInput(Inputs.pushTag, { required: false }) === 'true';
             switch (actionName) {
                 case 'autoIncrementPatch': {
-                    const branch = getInput(Inputs.branch, { required: true });
+                    const prefix = getInput(Inputs.prefix, { required: true });
                     const newTag = await this._actions.autoIncrementPatch({
                         githubClient: this._githubClient,
-                        branch,
+                        prefix,
                         pushTag,
                     });
                     if (newTag == null) {
-                        info(`can't make a new tag from ${branch}`);
+                        info(`can't make a new tag from ${prefix}`);
                         return;
                     }
                     this.processTag(newTag, pushTag);
@@ -11577,7 +11587,7 @@ class Action {
                     return;
                 }
                 default: {
-                    throw new Error(`${actionName} is unknown`);
+                    assertUnreachable(actionName);
                 }
             }
         }
@@ -11746,18 +11756,13 @@ class Tag {
     }
 }
 
-;// CONCATENATED MODULE: ./lib/utils.js
-function getBranchName(branch) {
-    return branch.replace('refs/heads/', '');
-}
-
 ;// CONCATENATED MODULE: ./lib/actions/autoIncrementPatch.js
 
 
-async function autoIncrementPatch({ branch, githubClient, pushTag, }) {
+async function autoIncrementPatch({ prefix, githubClient, pushTag, }) {
     const tags = await githubClient.listSemVerTags();
-    const branchName = getBranchName(branch);
-    const prevTag = Tag.getHighestTagOrDefaultWithPrefix(tags, branchName);
+    const prefixOrBranch = getBranchName(prefix);
+    const prevTag = Tag.getHighestTagOrDefaultWithPrefix(tags, prefixOrBranch);
     if (prevTag == null) {
         return undefined;
     }

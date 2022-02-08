@@ -32,7 +32,7 @@ describe('action', () => {
             switch (name as Inputs) {
               case Inputs.actionName:
                 return 'autoIncrementPatch';
-              case Inputs.branch:
+              case Inputs.prefix:
                 return 'master';
               case Inputs.pushTag:
                 return 'true';
@@ -67,20 +67,20 @@ describe('action', () => {
         const action = new Action(githubClient, actionAdapter, actions);
         await action.run();
         expect(actionAdapter.setFailed).toHaveBeenCalledWith(
-          new Error(`${wrongActionName} is unknown`),
+          new Error(`${wrongActionName} should be unreachable`),
         );
       });
     });
 
     describe('runs autoIncrementPatch', () => {
-      const branch = 'master';
+      const prefix = 'master';
       const defaultActionAdapter = getActionAdapter(
         jest.fn((name) => {
           switch (name as Inputs) {
             case Inputs.actionName:
               return 'autoIncrementPatch';
-            case Inputs.branch:
-              return branch;
+            case Inputs.prefix:
+              return prefix;
             case Inputs.pushTag:
               return 'false';
             default:
@@ -100,7 +100,7 @@ describe('action', () => {
         await action.run();
         expect(actions.autoIncrementPatch).toHaveBeenCalledWith({
           githubClient,
-          branch,
+          prefix,
           pushTag: false,
         });
         expect(actions.makePrerelease).not.toBeCalled();
@@ -130,7 +130,7 @@ describe('action', () => {
         const action = new Action(githubClient, defaultActionAdapter, actions);
         await action.run();
         expect(defaultActionAdapter.info).toHaveBeenCalledWith(
-          `can't make a new tag from ${branch}`,
+          `can't make a new tag from ${prefix}`,
         );
       });
       it('and informs about new tag', async () => {
@@ -158,8 +158,8 @@ describe('action', () => {
             switch (name as Inputs) {
               case Inputs.actionName:
                 return 'autoIncrementPatch';
-              case Inputs.branch:
-                return branch;
+              case Inputs.prefix:
+                return prefix;
               case Inputs.pushTag:
                 return 'true';
               default:
@@ -185,8 +185,6 @@ describe('action', () => {
           switch (name as Inputs) {
             case Inputs.actionName:
               return 'makePrerelease';
-            case Inputs.branch:
-              return branch;
             case Inputs.prefix:
               return branch;
             case Inputs.pushTag:
@@ -248,8 +246,6 @@ describe('action', () => {
             switch (name as Inputs) {
               case Inputs.actionName:
                 return 'makePrerelease';
-              case Inputs.branch:
-                return branch;
               case Inputs.pushTag:
                 return 'true';
               case Inputs.prefix:

@@ -4,19 +4,19 @@ import { getBranchName } from '../utils';
 
 export type AutoIncrementPatchParams = {
   githubClient: IGithubClient;
-  branch: string;
+  prefix: string;
   pushTag: boolean;
 };
 
 export async function autoIncrementPatch({
-  branch,
+  prefix,
   githubClient,
   pushTag,
 }: AutoIncrementPatchParams) {
   const tags = await githubClient.listSemVerTags();
-  const branchName = getBranchName(branch);
+  const prefixOrBranch = getBranchName(prefix);
 
-  const prevTag = Tag.getHighestTagOrDefaultWithPrefix(tags, branchName);
+  const prevTag = Tag.getHighestTagOrDefaultWithPrefix(tags, prefixOrBranch);
   if (prevTag == null) {
     return undefined;
   }

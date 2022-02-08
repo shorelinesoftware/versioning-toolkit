@@ -29,7 +29,7 @@ describe('autoIncrementPatch', () => {
   it('bumps patch version', async () => {
     const newTag = await autoIncrementPatch({
       githubClient: defaultGithubClient,
-      branch: 'refs/heads/master',
+      prefix: 'refs/heads/master',
       pushTag: false,
     });
     expect(newTag?.value).toBe('master-1.1.1');
@@ -42,15 +42,15 @@ describe('autoIncrementPatch', () => {
     };
     const newTag = await autoIncrementPatch({
       githubClient,
-      branch: '',
+      prefix: '',
       pushTag: false,
     });
     expect(newTag).toBe(undefined);
   });
-  it('bumps patch version of specific branch', async () => {
+  it('bumps patch version if prefix is tag like branch', async () => {
     const newTag = await autoIncrementPatch({
       githubClient: defaultGithubClient,
-      branch: 'refs/heads/stable-2.3',
+      prefix: 'refs/heads/stable-2.3',
       pushTag: false,
     });
     expect(newTag?.value).toBe('stable-2.3.2');
@@ -58,7 +58,7 @@ describe('autoIncrementPatch', () => {
   it('creates initial tag and bumps patch version when no previous tags', async () => {
     const newTag = await autoIncrementPatch({
       githubClient: defaultGithubClient,
-      branch: 'refs/heads/feature',
+      prefix: 'refs/heads/feature',
       pushTag: false,
     });
     expect(newTag?.value).toBe('feature-0.0.1');
@@ -66,7 +66,7 @@ describe('autoIncrementPatch', () => {
   it('creates new tag with initial patch version when tag like branch name', async () => {
     const newTag = await autoIncrementPatch({
       githubClient: defaultGithubClient,
-      branch: 'refs/heads/feature-1.0',
+      prefix: 'refs/heads/feature-1.0',
       pushTag: false,
     });
     expect(newTag?.value).toBe('feature-1.0.1');
@@ -74,7 +74,7 @@ describe('autoIncrementPatch', () => {
   it('pushes new tag when pushTag is true', async () => {
     const newTag = await autoIncrementPatch({
       githubClient: defaultGithubClient,
-      branch: 'refs/heads/feature-1.0',
+      prefix: 'refs/heads/feature-1.0',
       pushTag: true,
     });
     expect(defaultGithubClient.createTag).toHaveBeenCalledWith(newTag);
@@ -82,7 +82,7 @@ describe('autoIncrementPatch', () => {
   it('does not push new tag when pushTag is false', async () => {
     await autoIncrementPatch({
       githubClient: defaultGithubClient,
-      branch: 'refs/heads/feature-1.0',
+      prefix: 'refs/heads/feature-1.0',
       pushTag: false,
     });
     expect(defaultGithubClient.createTag).not.toBeCalled();
