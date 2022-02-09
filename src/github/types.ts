@@ -12,4 +12,6 @@ export type ListTagsResponse =
 export type GithubAdapter = {
   listTags: (params: ListTagsParams) => Promise<ListTagsResponse>;
   createRef: (ref: string) => Promise<void>;
+  getBranch: (branch: string) => Promise<string>;
+  deleteRef: (ref: string) => Promise<void>;
 };

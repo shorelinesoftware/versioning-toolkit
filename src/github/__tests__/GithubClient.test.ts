@@ -64,4 +64,63 @@ describe('GithubClient', () => {
       );
     });
   });
+  describe('checkBranchExists', () => {
+    it('returns true when branch exists', async () => {
+      const branch = 'master-0.1';
+      githubAdapter.getBranch.mockReturnValueOnce(Promise.resolve(branch));
+      const exists = await githubClient.checkBranchExists(branch);
+      expect(exists).toBe(true);
+    });
+    it('returns false when branch does not exist', async () => {
+      const branch = 'unknown';
+      githubAdapter.getBranch.mockReturnValueOnce(
+        // eslint-disable-next-line prefer-promise-reject-errors
+        Promise.reject({
+          status: 404,
+        }),
+      );
+      const exists = await githubClient.checkBranchExists(branch);
+      expect(exists).toBe(false);
+    });
+    it('throws exception if error is unknown', async () => {
+      const branch = 'unknown';
+      githubAdapter.getBranch.mockReturnValueOnce(
+        Promise.reject(new Error('')),
+      );
+      await expect(async () =>
+        githubClient.checkBranchExists(branch),
+      ).rejects.toThrow();
+    });
+  });
+  describe('deleteBranch', () => {
+    it('returns true when branch deleted', async () => {
+      const branch = 'master';
+      githubAdapter.deleteRef.mockReturnValueOnce(Promise.resolve());
+      const exists = await githubClient.deleteBranch(branch);
+      expect(githubAdapter.deleteRef).toHaveBeenCalledWith(
+        `refs/heads/${branch}`,
+      );
+      expect(exists).toBe(true);
+    });
+    it('returns false when branch does not exist', async () => {
+      const branch = 'unknown';
+      githubAdapter.deleteRef.mockReturnValueOnce(
+        // eslint-disable-next-line prefer-promise-reject-errors
+        Promise.reject({
+          status: 404,
+        }),
+      );
+      const exists = await githubClient.deleteBranch(branch);
+      expect(exists).toBe(false);
+    });
+    it('throws exception if error is unknown', async () => {
+      const branch = 'unknown';
+      githubAdapter.deleteRef.mockReturnValueOnce(
+        Promise.reject(new Error('')),
+      );
+      await expect(async () =>
+        githubClient.deleteBranch(branch),
+      ).rejects.toThrow();
+    });
+  });
 });

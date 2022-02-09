@@ -20,5 +20,21 @@ export function getGithubAdapter(githubToken: string): GithubAdapter {
         sha: context.sha,
       });
     },
+    getBranch: async (branch) => {
+      return await octokit.rest.repos
+        .getBranch({
+          ...context.repo,
+          branch,
+        })
+        .then((response) => response.data.name);
+    },
+    deleteRef: async (ref: string) => {
+      return await octokit.rest.git
+        .deleteRef({
+          ...context.repo,
+          ref,
+        })
+        .then(() => undefined);
+    },
   };
 }

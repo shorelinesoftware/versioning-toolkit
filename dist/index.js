@@ -11817,10 +11817,37 @@ function getGithubAdapter(githubToken) {
                 sha: github.context.sha,
             });
         },
+        getBranch: async (branch) => {
+            return await octokit.rest.repos
+                .getBranch({
+                ...github.context.repo,
+                branch,
+            })
+                .then((response) => response.data.name);
+        },
+        deleteRef: async (ref) => {
+            return await octokit.rest.git
+                .deleteRef({
+                ...github.context.repo,
+                ref,
+            })
+                .then(() => undefined);
+        },
     };
 }
 
+;// CONCATENATED MODULE: ./lib/github/utils.js
+function hasKey(k, o) {
+    return typeof o === 'object' && o != null && k in o;
+}
+function isNotFoundError(error) {
+    return (hasKey('status', error) &&
+        typeof error.status === 'number' &&
+        error.status === 404);
+}
+
 ;// CONCATENATED MODULE: ./lib/github/GithubClient.js
+
 
 
 class GithubClient {
@@ -11836,6 +11863,28 @@ class GithubClient {
     }
     async createTag(tag) {
         await this._githubAdapter.createRef(`refs/tags/${tag}`);
+    }
+    async checkBranchExists(branchName) {
+        return this._githubAdapter
+            .getBranch(branchName)
+            .then(() => true)
+            .catch((error) => {
+            if (isNotFoundError(error)) {
+                return false;
+            }
+            throw error;
+        });
+    }
+    async deleteBranch(branchName) {
+        return this._githubAdapter
+            .deleteRef(`refs/heads/${branchName}`)
+            .then(() => true)
+            .catch((error) => {
+            if (isNotFoundError(error)) {
+                return false;
+            }
+            throw error;
+        });
     }
     async _listSemVerTags(shouldFetchAllTags = false, fetchedTags = [], page = 1) {
         const perPage = 100;

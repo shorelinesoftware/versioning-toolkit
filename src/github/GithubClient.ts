@@ -1,6 +1,7 @@
 import { Tag } from '../models/Tag';
 import { getGithubAdapter } from './gihubAdapter';
 import { GithubAdapter } from './types';
+import { isNotFoundError } from './utils';
 
 export interface IGithubClient {
   listSemVerTags: (
@@ -32,6 +33,30 @@ export class GithubClient implements IGithubClient {
 
   async createTag(tag: Tag) {
     await this._githubAdapter.createRef(`refs/tags/${tag}`);
+  }
+
+  async checkBranchExists(branchName: string) {
+    return this._githubAdapter
+      .getBranch(branchName)
+      .then(() => true)
+      .catch((error) => {
+        if (isNotFoundError(error)) {
+          return false;
+        }
+        throw error;
+      });
+  }
+
+  async deleteBranch(branchName: string) {
+    return this._githubAdapter
+      .deleteRef(`refs/heads/${branchName}`)
+      .then(() => true)
+      .catch((error) => {
+        if (isNotFoundError(error)) {
+          return false;
+        }
+        throw error;
+      });
   }
 
   private async _listSemVerTags(
