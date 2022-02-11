@@ -12,6 +12,10 @@ export interface IGithubClient {
   createBranch: (branchName: string) => Promise<void>;
 
   createTag: (tag: Tag) => Promise<void>;
+
+  deleteBranch: (branch: string) => Promise<boolean>;
+
+  checkBranchExists: (branch: string) => Promise<boolean>;
 }
 
 export class GithubClient implements IGithubClient {

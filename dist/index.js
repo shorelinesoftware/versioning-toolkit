@@ -11523,6 +11523,10 @@ var Inputs;
     Inputs["actionName"] = "actionName";
     Inputs["prefix"] = "prefix";
     Inputs["pushTag"] = "pushTag";
+    Inputs["majorSegment"] = "majorSegment";
+    Inputs["minorSegment"] = "minorSegment";
+    Inputs["releaseBranchNamePrefix"] = "releaseBranchNamePrefix";
+    Inputs["mainBranch"] = "mainBranch";
 })(Inputs || (Inputs = {}));
 
 ;// CONCATENATED MODULE: ./lib/utils.js
@@ -11586,6 +11590,22 @@ class Action {
                     this.processTag(newTag, pushTag);
                     return;
                 }
+                case 'createRelease': {
+                    const mainBranch = getInput(Inputs.mainBranch, { required: true });
+                    const releaseBranchNamePrefix = getInput(Inputs.releaseBranchNamePrefix, {
+                        required: true,
+                    });
+                    const minorSegment = getInput(Inputs.minorSegment);
+                    const majorSegment = getInput(Inputs.majorSegment);
+                    await this._actions.createRelease({
+                        releaseBranchNamePrefix,
+                        githubClient: this._githubClient,
+                        mainBranchRawName: mainBranch,
+                        rowMajorSegment: majorSegment,
+                        rowMinorSegment: minorSegment,
+                    });
+                    return;
+                }
                 default: {
                     assertUnreachable(actionName);
                 }
@@ -11641,7 +11661,12 @@ class Tag {
             throw new Error(`missing version`);
         }
         try {
-            this._semVer = new semver.SemVer(args.version);
+            if (typeof args.version === 'string') {
+                this._semVer = new semver.SemVer(args.version);
+            }
+            else {
+                this._semVer = new semver.SemVer(`${args.version.major}.${args.version.minor}.${args.version.patch}`);
+            }
         }
         catch {
             throw new Error(`${args.version} can't be parsed into a version`);
@@ -11655,6 +11680,18 @@ class Tag {
     }
     get version() {
         return this._semVer.raw;
+    }
+    get majorSegment() {
+        return this._semVer.major;
+    }
+    get minorSegment() {
+        return this._semVer.minor;
+    }
+    get patchSegment() {
+        return this._semVer.patch;
+    }
+    get prereleaseSegment() {
+        return this._semVer.prerelease[0]?.toString();
     }
     get value() {
         return `${this.prefix}-${this._semVer.version}`;
@@ -11771,6 +11808,42 @@ async function autoIncrementPatch({ prefix, githubClient, pushTag, }) {
         await githubClient.createTag(newTag);
     }
     return newTag;
+}
+
+;// CONCATENATED MODULE: ./lib/actions/createRelease.js
+
+
+function parseSegment(segment) {
+    return Number.parseInt(segment ?? '', 10) || undefined;
+}
+async function createRelease({ releaseBranchNamePrefix, githubClient, mainBranchRawName, rowMajorSegment, rowMinorSegment, }) {
+    if (releaseBranchNamePrefix) {
+        throw new Error('missing branchNamePrefix');
+    }
+    const tags = await githubClient.listSemVerTags();
+    const minorSegment = parseSegment(rowMinorSegment);
+    const majorSegment = parseSegment(rowMajorSegment);
+    const prevReleaseTag = Tag.getHighestTagOrDefaultWithPrefix(tags, releaseBranchNamePrefix);
+    const mainTag = Tag.getHighestTagOrDefaultWithPrefix(tags, getBranchName(mainBranchRawName));
+    const newReleaseTag = new Tag({
+        prefix: prevReleaseTag.prefix,
+        version: {
+            major: majorSegment ?? mainTag.majorSegment,
+            minor: minorSegment ?? mainTag.minorSegment,
+            patch: 0,
+        },
+    });
+    const newMainTag = new Tag({
+        prefix: mainTag.prefix,
+        version: {
+            major: majorSegment ?? mainTag.majorSegment,
+            minor: minorSegment ?? mainTag.minorSegment + 1,
+            patch: 0,
+        },
+    });
+    await githubClient.createTag(newReleaseTag);
+    await githubClient.createTag(newMainTag);
+    await githubClient.createBranch(`${releaseBranchNamePrefix}-${newReleaseTag.majorSegment}.${newReleaseTag.minorSegment}`);
 }
 
 ;// CONCATENATED MODULE: ./lib/actions/makePrerelease.js
@@ -11911,6 +11984,7 @@ function createGithubClient(githubToken) {
 
 
 
+
 async function run() {
     const actionAdapter = getActionAdapter();
     try {
@@ -11922,6 +11996,7 @@ async function run() {
         const actionDictionary = {
             autoIncrementPatch: autoIncrementPatch,
             makePrerelease: makePrerelease,
+            createRelease: createRelease,
         };
         const action = new Action(github, actionAdapter, actionDictionary);
         await action.run();

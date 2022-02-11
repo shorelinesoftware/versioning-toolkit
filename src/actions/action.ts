@@ -4,11 +4,13 @@ import { ActionName, Equals, Inputs } from '../types';
 import { assertUnreachable } from '../utils';
 import { ActionAdapter } from './actionAdapter';
 import { AutoIncrementPatch } from './autoIncrementPatch';
+import { CreateRelease } from './createRelease';
 import { MakePrerelease } from './makePrerelease';
 
 export type Actions = {
   autoIncrementPatch: AutoIncrementPatch;
   makePrerelease: MakePrerelease;
+  createRelease: CreateRelease;
 };
 
 // * This type checks that Actions have all keys from ActionName
@@ -73,6 +75,25 @@ export class Action {
             pushTag,
           });
           this.processTag(newTag, pushTag);
+          return;
+        }
+        case 'createRelease': {
+          const mainBranch = getInput(Inputs.mainBranch, { required: true });
+          const releaseBranchNamePrefix = getInput(
+            Inputs.releaseBranchNamePrefix,
+            {
+              required: true,
+            },
+          );
+          const minorSegment = getInput(Inputs.minorSegment);
+          const majorSegment = getInput(Inputs.majorSegment);
+          await this._actions.createRelease({
+            releaseBranchNamePrefix,
+            githubClient: this._githubClient,
+            mainBranchRawName: mainBranch,
+            rowMajorSegment: majorSegment,
+            rowMinorSegment: minorSegment,
+          });
           return;
         }
         default: {

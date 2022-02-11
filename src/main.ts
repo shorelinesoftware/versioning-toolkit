@@ -1,6 +1,7 @@
 import { Action, Actions } from './actions/action';
 import { getActionAdapter } from './actions/actionAdapter';
 import { autoIncrementPatch } from './actions/autoIncrementPatch';
+import { createRelease } from './actions/createRelease';
 import { makePrerelease } from './actions/makePrerelease';
 import { createGithubClient } from './github/GithubClient';
 
@@ -16,6 +17,7 @@ async function run() {
     const actionDictionary: Actions = {
       autoIncrementPatch,
       makePrerelease,
+      createRelease,
     };
 
     const action = new Action(github, actionAdapter, actionDictionary);
