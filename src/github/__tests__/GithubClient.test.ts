@@ -1,9 +1,28 @@
 import { Tag } from '../../models/Tag';
-import { createMockGithubAdapter } from '../../testUtils';
+import { Mocked } from '../../testUtils';
 import { GithubClient } from '../GithubClient';
+import { GithubAdapter, ListTagsResponse } from '../types';
 
 const PER_PAGE = 100;
 const TOTAL_TAGS = PER_PAGE * 2;
+
+function createMockGithubAdapter(
+  tags: ListTagsResponse,
+): Mocked<GithubAdapter> {
+  return {
+    listTags: jest.fn(async ({ page = 1, per_page }) => {
+      if (per_page == null) {
+        return Promise.resolve(tags);
+      }
+      return Promise.resolve(
+        tags.slice((page - 1) * per_page, page * per_page),
+      );
+    }),
+    createRef: jest.fn<Promise<void>, [string]>(),
+    getBranch: jest.fn<Promise<string>, [string]>(),
+    deleteRef: jest.fn<Promise<void>, [string]>(),
+  };
+}
 
 const defaultTags = [
   ...[...new Array(TOTAL_TAGS).keys()].map((_, index) => ({

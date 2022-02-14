@@ -1,5 +1,6 @@
 import { IGithubClient } from '../../github/GithubClient';
 import { Tag } from '../../models/Tag';
+import { Mocked } from '../../testUtils';
 import { autoIncrementPatch } from '../autoIncrementPatch';
 
 describe('autoIncrementPatch', () => {
@@ -21,27 +22,26 @@ describe('autoIncrementPatch', () => {
     new Tag('stable-0.1.0'),
   ];
 
-  const defaultGithubClient: IGithubClient = {
+  const mockedGithubClient: Mocked<IGithubClient> = {
     createTag: jest.fn<Promise<void>, [Tag]>(),
-    listSemVerTags: async () => Promise.resolve(tags),
+    listSemVerTags: jest.fn(async () => Promise.resolve(tags)),
     createBranch: jest.fn<Promise<void>, [string]>(),
+    deleteBranch: jest.fn<Promise<boolean>, [string]>(),
+    checkBranchExists: jest.fn<Promise<boolean>, [string]>(),
   };
+
   it('bumps patch version', async () => {
     const newTag = await autoIncrementPatch({
-      githubClient: defaultGithubClient,
+      githubClient: mockedGithubClient,
       prefix: 'refs/heads/master',
       pushTag: false,
     });
     expect(newTag?.value).toBe('master-1.1.1');
   });
   it('returns undefined if cannot bump tag', async () => {
-    const githubClient: IGithubClient = {
-      createTag: jest.fn<Promise<void>, [Tag]>(),
-      listSemVerTags: async () => Promise.resolve([]),
-      createBranch: jest.fn<Promise<void>, [string]>(),
-    };
+    mockedGithubClient.listSemVerTags.mockReturnValueOnce(Promise.resolve([]));
     const newTag = await autoIncrementPatch({
-      githubClient,
+      githubClient: mockedGithubClient,
       prefix: '',
       pushTag: false,
     });
@@ -49,7 +49,7 @@ describe('autoIncrementPatch', () => {
   });
   it('bumps patch version if prefix is tag like branch', async () => {
     const newTag = await autoIncrementPatch({
-      githubClient: defaultGithubClient,
+      githubClient: mockedGithubClient,
       prefix: 'refs/heads/stable-2.3',
       pushTag: false,
     });
@@ -57,7 +57,7 @@ describe('autoIncrementPatch', () => {
   });
   it('creates initial tag and bumps patch version when no previous tags', async () => {
     const newTag = await autoIncrementPatch({
-      githubClient: defaultGithubClient,
+      githubClient: mockedGithubClient,
       prefix: 'refs/heads/feature',
       pushTag: false,
     });
@@ -65,7 +65,7 @@ describe('autoIncrementPatch', () => {
   });
   it('creates new tag with initial patch version when tag like branch name', async () => {
     const newTag = await autoIncrementPatch({
-      githubClient: defaultGithubClient,
+      githubClient: mockedGithubClient,
       prefix: 'refs/heads/feature-1.0',
       pushTag: false,
     });
@@ -73,18 +73,18 @@ describe('autoIncrementPatch', () => {
   });
   it('pushes new tag when pushTag is true', async () => {
     const newTag = await autoIncrementPatch({
-      githubClient: defaultGithubClient,
+      githubClient: mockedGithubClient,
       prefix: 'refs/heads/feature-1.0',
       pushTag: true,
     });
-    expect(defaultGithubClient.createTag).toHaveBeenCalledWith(newTag);
+    expect(mockedGithubClient.createTag).toHaveBeenCalledWith(newTag);
   });
   it('does not push new tag when pushTag is false', async () => {
     await autoIncrementPatch({
-      githubClient: defaultGithubClient,
+      githubClient: mockedGithubClient,
       prefix: 'refs/heads/feature-1.0',
       pushTag: false,
     });
-    expect(defaultGithubClient.createTag).not.toBeCalled();
+    expect(mockedGithubClient.createTag).not.toBeCalled();
   });
 });

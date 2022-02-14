@@ -1,27 +1,9 @@
-import { GithubAdapter, ListTagsResponse } from './github/types';
 import Mock = jest.Mock;
+import MaybeMockedDeep = jest.MaybeMockedDeep;
 
-export type MockedGithubAdapter = {
-  [P in keyof GithubAdapter]: Mock<
-    ReturnType<GithubAdapter[P]>,
-    Parameters<GithubAdapter[P]>
-  >;
+export type Mocked<T> = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [P in keyof T]: T[P] extends (...arg: any[]) => any
+    ? Mock<ReturnType<T[P]>, Parameters<T[P]>>
+    : MaybeMockedDeep<T[P]>;
 };
-
-export function createMockGithubAdapter(
-  tags: ListTagsResponse,
-): MockedGithubAdapter {
-  return {
-    listTags: jest.fn(async ({ page = 1, per_page }) => {
-      if (per_page == null) {
-        return Promise.resolve(tags);
-      }
-      return Promise.resolve(
-        tags.slice((page - 1) * per_page, page * per_page),
-      );
-    }),
-    createRef: jest.fn<Promise<void>, [string]>(),
-    getBranch: jest.fn<Promise<string>, [string]>(),
-    deleteRef: jest.fn<Promise<void>, [string]>(),
-  };
-}

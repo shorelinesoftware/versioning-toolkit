@@ -1,81 +1,80 @@
 import { IGithubClient } from '../../github/GithubClient';
 import { Tag } from '../../models/Tag';
+import { Mocked } from '../../testUtils';
 import { Inputs } from '../../types';
 import { Action, Actions } from '../action';
 import { ActionAdapter } from '../actionAdapter';
 
+const mockedActions: Mocked<Actions> = {
+  autoIncrementPatch: jest.fn(),
+  makePrerelease: jest.fn(),
+  createRelease: jest.fn(),
+};
+
+const mockedActionAdapter: Mocked<ActionAdapter> = {
+  getInput: jest.fn(),
+  info: jest.fn(),
+  setFailed: jest.fn(),
+  setOutput: jest.fn(),
+  sha: jest.mocked('abc'),
+};
+
 describe('action', () => {
   describe('run', () => {
-    const githubClient: IGithubClient = {
+    const mockedGithubClient: IGithubClient = {
       createTag: jest.fn<Promise<void>, [Tag]>(),
       listSemVerTags: async () => Promise.resolve([new Tag('master-0.1.1')]),
       createBranch: jest.fn<Promise<void>, [string]>(),
-    };
-
-    const getActionAdapter: (
-      getInput: ActionAdapter['getInput'],
-    ) => ActionAdapter = (getInput) => ({
-      getInput,
-      info: jest.fn(),
-      setFailed: jest.fn(),
-      setOutput: jest.fn(),
-      sha: 'abc',
-    });
-    const defaultActions: Actions = {
-      autoIncrementPatch: jest.fn(),
-      makePrerelease: jest.fn(),
+      deleteBranch: jest.fn<Promise<boolean>, [string]>(),
+      checkBranchExists: jest.fn<Promise<boolean>, [string]>(),
     };
     describe('sets failed', () => {
       it('when exception is thrown', async () => {
-        const actionAdapter = getActionAdapter(
-          jest.fn((name) => {
-            switch (name as Inputs) {
-              case Inputs.actionName:
-                return 'autoIncrementPatch';
-              case Inputs.prefix:
-                return 'master';
-              case Inputs.pushTag:
-                return 'true';
-              default:
-                throw new Error('Input not found');
-            }
-          }),
+        mockedActionAdapter.getInput.mockImplementation((name) => {
+          switch (name as Inputs) {
+            case Inputs.actionName:
+              return 'autoIncrementPatch';
+            case Inputs.prefix:
+              return 'master';
+            case Inputs.pushTag:
+              return 'true';
+            default:
+              throw new Error('Input not found');
+          }
+        });
+
+        mockedActions.autoIncrementPatch.mockImplementationOnce(() => {
+          throw new Error('error');
+        });
+        const action = new Action(
+          mockedGithubClient,
+          mockedActionAdapter,
+          mockedActions,
         );
-
-        const actions = {
-          ...defaultActions,
-          autoIncrementPatch: jest.fn(async () => {
-            throw new Error('error');
-          }),
-        };
-
-        const action = new Action(githubClient, actionAdapter, actions);
         await action.run();
-        expect(actionAdapter.setFailed).toHaveBeenCalledWith(
+        expect(mockedActionAdapter.setFailed).toHaveBeenCalledWith(
           new Error('error'),
         );
       });
       it('when action name is wrong', async () => {
         const wrongActionName = 'wrongActionName';
-        const actionAdapter = getActionAdapter(jest.fn(() => wrongActionName));
+        mockedActionAdapter.getInput.mockReturnValueOnce(wrongActionName);
 
-        const actions = {
-          autoIncrementPatch: jest.fn(),
-          makePrerelease: jest.fn(),
-        };
-
-        const action = new Action(githubClient, actionAdapter, actions);
+        const action = new Action(
+          mockedGithubClient,
+          mockedActionAdapter,
+          mockedActions,
+        );
         await action.run();
-        expect(actionAdapter.setFailed).toHaveBeenCalledWith(
+        expect(mockedActionAdapter.setFailed).toHaveBeenCalledWith(
           new Error(`${wrongActionName} should be unreachable`),
         );
       });
     });
 
     describe('runs autoIncrementPatch', () => {
-      const prefix = 'master';
-      const defaultActionAdapter = getActionAdapter(
-        jest.fn((name) => {
+      beforeAll(() => {
+        mockedActionAdapter.getInput.mockImplementation((name) => {
           switch (name as Inputs) {
             case Inputs.actionName:
               return 'autoIncrementPatch';
@@ -86,91 +85,99 @@ describe('action', () => {
             default:
               throw new Error('Input not found');
           }
-        }),
-      );
-      it('when action name is autoIncrementPatch', async () => {
-        const actions: Actions = {
-          autoIncrementPatch: jest.fn(async () =>
-            Promise.resolve(new Tag('master-1.1.0')),
-          ),
-          makePrerelease: jest.fn(),
-        };
+        });
+      });
+      const prefix = 'master';
 
-        const action = new Action(githubClient, defaultActionAdapter, actions);
+      it('when action name is autoIncrementPatch', async () => {
+        mockedActions.autoIncrementPatch.mockReturnValueOnce(
+          Promise.resolve(new Tag('master-1.1.0')),
+        );
+        const action = new Action(
+          mockedGithubClient,
+          mockedActionAdapter,
+          mockedActions,
+        );
         await action.run();
-        expect(actions.autoIncrementPatch).toHaveBeenCalledWith({
-          githubClient,
+        expect(mockedActions.autoIncrementPatch).toHaveBeenCalledWith({
+          githubClient: mockedGithubClient,
           prefix,
           pushTag: false,
         });
-        expect(actions.makePrerelease).not.toBeCalled();
+        expect(mockedActions.makePrerelease).not.toBeCalled();
       });
       it('and sets output when tag is returned', async () => {
         const tag = new Tag('master-1.1.0');
-        const actions: Actions = {
-          ...defaultActions,
-          autoIncrementPatch: jest.fn(async () =>
-            Promise.resolve(new Tag('master-1.1.0')),
-          ),
-        };
-
-        const action = new Action(githubClient, defaultActionAdapter, actions);
+        mockedActions.autoIncrementPatch.mockReturnValueOnce(
+          Promise.resolve(new Tag('master-1.1.0')),
+        );
+        const action = new Action(
+          mockedGithubClient,
+          mockedActionAdapter,
+          mockedActions,
+        );
         await action.run();
-        expect(defaultActionAdapter.setOutput).toHaveBeenCalledWith(
+        expect(mockedActionAdapter.setOutput).toHaveBeenCalledWith(
           'NEW_TAG',
           tag.value,
         );
       });
       it('and informs when tag is not returned', async () => {
-        const actions: Actions = {
-          ...defaultActions,
-          autoIncrementPatch: jest.fn(async () => Promise.resolve(undefined)),
-        };
+        mockedActions.autoIncrementPatch.mockReturnValueOnce(
+          Promise.resolve(Promise.resolve(undefined)),
+        );
 
-        const action = new Action(githubClient, defaultActionAdapter, actions);
+        const action = new Action(
+          mockedGithubClient,
+          mockedActionAdapter,
+          mockedActions,
+        );
         await action.run();
-        expect(defaultActionAdapter.info).toHaveBeenCalledWith(
+        expect(mockedActionAdapter.info).toHaveBeenCalledWith(
           `can't make a new tag from ${prefix}`,
         );
       });
       it('and informs about new tag', async () => {
         const tag = new Tag('master-1.1.0');
-        const actions: Actions = {
-          ...defaultActions,
-          autoIncrementPatch: jest.fn(async () => Promise.resolve(tag)),
-        };
-
-        const action = new Action(githubClient, defaultActionAdapter, actions);
+        mockedActions.autoIncrementPatch.mockReturnValueOnce(
+          Promise.resolve(new Tag(tag)),
+        );
+        const action = new Action(
+          mockedGithubClient,
+          mockedActionAdapter,
+          mockedActions,
+        );
         await action.run();
-        expect(defaultActionAdapter.info).toHaveBeenCalledWith(
+        expect(mockedActionAdapter.info).toHaveBeenCalledWith(
           `new tag: ${tag}`,
         );
       });
       it('and informs if new tag was pushed', async () => {
         const tag = new Tag('master-1.1.0');
-        const actions: Actions = {
-          ...defaultActions,
-          autoIncrementPatch: jest.fn(async () => Promise.resolve(tag)),
-        };
 
-        const actionAdapter = getActionAdapter(
-          jest.fn((name) => {
-            switch (name as Inputs) {
-              case Inputs.actionName:
-                return 'autoIncrementPatch';
-              case Inputs.prefix:
-                return prefix;
-              case Inputs.pushTag:
-                return 'true';
-              default:
-                throw new Error('Input not found');
-            }
-          }),
+        mockedActions.autoIncrementPatch.mockReturnValueOnce(
+          Promise.resolve(new Tag(tag)),
         );
+        mockedActionAdapter.getInput.mockImplementation((name) => {
+          switch (name as Inputs) {
+            case Inputs.actionName:
+              return 'autoIncrementPatch';
+            case Inputs.prefix:
+              return prefix;
+            case Inputs.pushTag:
+              return 'true';
+            default:
+              throw new Error('Input not found');
+          }
+        });
 
-        const action = new Action(githubClient, actionAdapter, actions);
+        const action = new Action(
+          mockedGithubClient,
+          mockedActionAdapter,
+          mockedActions,
+        );
         await action.run();
-        expect(actionAdapter.info).toHaveBeenNthCalledWith(
+        expect(mockedActionAdapter.info).toHaveBeenNthCalledWith(
           2,
           `pushed new tag ${tag.value}`,
         );
@@ -180,8 +187,8 @@ describe('action', () => {
     describe('runs makePrerelease', () => {
       const tag = new Tag('master-1.1.0-abc');
       const branch = 'master';
-      const defaultActionAdapter = getActionAdapter(
-        jest.fn((name) => {
+      beforeAll(() => {
+        mockedActionAdapter.getInput.mockImplementation((name) => {
           switch (name as Inputs) {
             case Inputs.actionName:
               return 'makePrerelease';
@@ -192,73 +199,74 @@ describe('action', () => {
             default:
               throw new Error('Input not found');
           }
-        }),
-      );
-      it('when action name is makePrerelease', async () => {
-        const actions: Actions = {
-          ...defaultActions,
-          makePrerelease: jest.fn(async () => Promise.resolve(tag)),
-        };
+        });
+      });
 
-        const action = new Action(githubClient, defaultActionAdapter, actions);
+      it('when action name is makePrerelease', async () => {
+        mockedActions.makePrerelease.mockReturnValueOnce(Promise.resolve(tag));
+        const action = new Action(
+          mockedGithubClient,
+          mockedActionAdapter,
+          mockedActions,
+        );
         await action.run();
-        expect(actions.makePrerelease).toHaveBeenCalledWith({
-          githubClient,
+        expect(mockedActions.makePrerelease).toHaveBeenCalledWith({
+          githubClient: mockedGithubClient,
           tagPrefix: 'master',
           sha: 'abc',
           pushTag: false,
         });
-        expect(actions.autoIncrementPatch).not.toBeCalled();
+        expect(mockedActions.autoIncrementPatch).not.toBeCalled();
       });
       it('and sets output when tag is returned', async () => {
-        const actions: Actions = {
-          ...defaultActions,
-          makePrerelease: jest.fn(async () => Promise.resolve(tag)),
-        };
+        mockedActions.makePrerelease.mockReturnValueOnce(Promise.resolve(tag));
 
-        const action = new Action(githubClient, defaultActionAdapter, actions);
+        const action = new Action(
+          mockedGithubClient,
+          mockedActionAdapter,
+          mockedActions,
+        );
         await action.run();
-        expect(defaultActionAdapter.setOutput).toHaveBeenCalledWith(
+        expect(mockedActionAdapter.setOutput).toHaveBeenCalledWith(
           'NEW_TAG',
           tag.value,
         );
       });
       it('and informs about new tag', async () => {
-        const actions: Actions = {
-          ...defaultActions,
-          makePrerelease: jest.fn(async () => Promise.resolve(tag)),
-        };
-
-        const action = new Action(githubClient, defaultActionAdapter, actions);
+        mockedActions.makePrerelease.mockReturnValueOnce(Promise.resolve(tag));
+        const action = new Action(
+          mockedGithubClient,
+          mockedActionAdapter,
+          mockedActions,
+        );
         await action.run();
-        expect(defaultActionAdapter.info).toHaveBeenCalledWith(
+        expect(mockedActionAdapter.info).toHaveBeenCalledWith(
           `new tag: ${tag}`,
         );
       });
       it('and informs if new tag was pushed', async () => {
-        const actions: Actions = {
-          ...defaultActions,
-          makePrerelease: jest.fn(async () => Promise.resolve(tag)),
-        };
+        mockedActions.makePrerelease.mockReturnValueOnce(Promise.resolve(tag));
 
-        const actionAdapter = getActionAdapter(
-          jest.fn((name) => {
-            switch (name as Inputs) {
-              case Inputs.actionName:
-                return 'makePrerelease';
-              case Inputs.pushTag:
-                return 'true';
-              case Inputs.prefix:
-                return branch;
-              default:
-                throw new Error('Input not found');
-            }
-          }),
+        mockedActionAdapter.getInput.mockImplementation((name) => {
+          switch (name as Inputs) {
+            case Inputs.actionName:
+              return 'makePrerelease';
+            case Inputs.pushTag:
+              return 'true';
+            case Inputs.prefix:
+              return branch;
+            default:
+              throw new Error('Input not found');
+          }
+        });
+
+        const action = new Action(
+          mockedGithubClient,
+          mockedActionAdapter,
+          mockedActions,
         );
-
-        const action = new Action(githubClient, actionAdapter, actions);
         await action.run();
-        expect(actionAdapter.info).toHaveBeenNthCalledWith(
+        expect(mockedActionAdapter.info).toHaveBeenNthCalledWith(
           2,
           `pushed new tag ${tag.value}`,
         );

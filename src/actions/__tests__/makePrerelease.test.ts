@@ -1,5 +1,6 @@
 import { IGithubClient } from '../../github/GithubClient';
 import { Tag } from '../../models/Tag';
+import { Mocked } from '../../testUtils';
 import { makePrerelease } from '../makePrerelease';
 
 describe('makePrerelease', () => {
@@ -13,28 +14,30 @@ describe('makePrerelease', () => {
   const sha = '1ae1b19044adfe98998f4e1ab04da2e698cce6df';
   const shortSha = '1ae1b19';
 
-  const githubClient: IGithubClient = {
+  const mockedGithubClient: Mocked<IGithubClient> = {
     createTag: jest.fn<Promise<void>, [Tag]>(),
-    listSemVerTags: async () => Promise.resolve(tags),
+    listSemVerTags: jest.fn(async () => Promise.resolve(tags)),
     createBranch: jest.fn<Promise<void>, [string]>(),
+    deleteBranch: jest.fn<Promise<boolean>, [string]>(),
+    checkBranchExists: jest.fn<Promise<boolean>, [string]>(),
   };
   it('pushes new tag when pushTag is true', async () => {
     const newTag = await makePrerelease({
-      githubClient,
+      githubClient: mockedGithubClient,
       tagPrefix: 'refs/heads/feature-1.0',
       sha,
       pushTag: true,
     });
-    expect(githubClient.createTag).toHaveBeenCalledWith(newTag);
+    expect(mockedGithubClient.createTag).toHaveBeenCalledWith(newTag);
   });
   it('does not push new tag when pushTag is false', async () => {
     await makePrerelease({
-      githubClient,
+      githubClient: mockedGithubClient,
       tagPrefix: 'refs/heads/feature-1.0',
       sha,
       pushTag: false,
     });
-    expect(githubClient.createTag).not.toBeCalled();
+    expect(mockedGithubClient.createTag).not.toBeCalled();
   });
   it.each([
     {
@@ -61,7 +64,7 @@ describe('makePrerelease', () => {
     `makes prerelease tag $expected from prefix $prefix and sha ${sha}`,
     async ({ prefix, expected }) => {
       const tag = await makePrerelease({
-        githubClient,
+        githubClient: mockedGithubClient,
         tagPrefix: prefix,
         sha,
         pushTag: false,
@@ -72,7 +75,7 @@ describe('makePrerelease', () => {
   it('throws exception when missing prefix', async () => {
     await expect(async () =>
       makePrerelease({
-        githubClient,
+        githubClient: mockedGithubClient,
         tagPrefix: '',
         sha,
         pushTag: false,

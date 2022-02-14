@@ -32,10 +32,16 @@ describe('Tag', () => {
     expect(new Tag('master-0.0.0').value).toBe(expected);
   });
   it('constructor creates tag', () => {
+    const expected = 'master-0.0.0';
     const tag1 = new Tag('master-0.0.0');
     const tag2 = new Tag({ prefix: 'master', version: '0.0.0' });
-    expect(tag1.value).toBe(tag2.value);
-    expect(tag1.value).toBe('master-0.0.0');
+    const tag3 = new Tag({
+      prefix: 'master',
+      version: { major: 0, minor: 0, patch: 0 },
+    });
+    expect(tag1.value).toBe(expected);
+    expect(tag2.value).toBe(expected);
+    expect(tag3.value).toBe(expected);
   });
   it('constructor throws exception if args are invalid', () => {
     expect(() => new Tag('0.0.0')).toThrow(`0.0.0 can't be parsed into a tag`);

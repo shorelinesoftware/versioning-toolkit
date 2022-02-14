@@ -5,7 +5,6 @@ export enum Inputs {
   majorSegment = 'majorSegment',
   minorSegment = 'minorSegment',
   releaseBranchNamePrefix = 'releaseBranchNamePrefix',
-  mainBranch = 'mainBranch',
 }
 
 export type ActionName =
