@@ -23,18 +23,16 @@ export async function makeRelease({
   rowMinorSegment,
 }: CreateReleaseParams) {
   if (!releasePrefix) {
-    throw new Error('missing branchNamePrefix');
+    throw new Error('missing releasePrefix');
   }
 
   if (!rowMainTag) {
-    throw new Error('missing baseTag');
+    throw new Error('missing rowMainTag');
   }
-
-  const tags = await githubClient.listSemVerTags();
 
   const mainTag = await githubClient.getTag(rowMainTag);
   if (mainTag == null) {
-    throw new Error(`Can not find tag ${mainTag} in repository`);
+    throw new Error(`Can not find tag ${rowMainTag} in repository`);
   }
   const { value: mainTagValue, sha } = mainTag;
 
@@ -42,20 +40,15 @@ export async function makeRelease({
 
   const majorSegment = parseSegment(rowMajorSegment);
 
-  const prevReleaseTag = Tag.getHighestTagOrDefaultWithPrefix(
-    tags,
-    releasePrefix,
-  );
-
   const newReleaseTag = new Tag({
-    prefix: prevReleaseTag.prefix,
+    prefix: releasePrefix,
     version: {
       major: majorSegment ?? mainTagValue.majorSegment,
       minor: minorSegment ?? mainTagValue.minorSegment,
       patch:
         majorSegment != null || minorSegment != null
           ? 0
-          : prevReleaseTag.bumpPatchSegment().patchSegment,
+          : mainTagValue.patchSegment,
     },
   });
 
@@ -68,14 +61,14 @@ export async function makeRelease({
     },
   });
 
-  const newBranch = `${releasePrefix}-${newReleaseTag.majorSegment}.${newReleaseTag.minorSegment}`;
+  const newReleaseBranch = newReleaseTag.createBranch();
 
   await githubClient.createTag(newReleaseTag, sha);
   await githubClient.createTag(newMainTag, sha);
-  await githubClient.createBranch(newBranch, sha);
+  await githubClient.createBranch(newReleaseBranch, sha);
   return {
     newReleaseTag,
     newMainTag,
-    newBranch,
+    newReleaseBranch,
   };
 }

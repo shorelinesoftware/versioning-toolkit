@@ -46,6 +46,7 @@
       "semi": "off",
       "camelcase": "off",
       "no-dupe-class-members": "off",
+      "i18n-text/no-en": "off",
       "@typescript-eslint/no-dupe-class-members": ["error"],
       "@typescript-eslint/prefer-enum-initializers": "error",
       "@typescript-eslint/no-unused-vars": "error",
