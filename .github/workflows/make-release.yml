@@ -44,4 +44,4 @@ jobs:
           majorSegment: ${{ github.event.inputs.majorSegment }}
           minorSegment: ${{ github.event.inputs.minorSegment }}
           actionName: 'makeRelease'
-        run: 'echo ${{ steps.make_release.outputs.NEW_RELEASE }}'
+      - run: 'echo ${{ steps.make_release.outputs.NEW_RELEASE }}'
