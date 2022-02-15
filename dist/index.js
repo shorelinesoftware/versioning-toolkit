@@ -11656,7 +11656,12 @@ class Tag {
                 this._semVer = new semver.SemVer(args.version);
             }
             else {
-                this._semVer = new semver.SemVer(`${args.version.major}.${args.version.minor}.${args.version.patch}`);
+                if (args.version.prerelease) {
+                    this._semVer = new semver.SemVer(`${args.version.major}.${args.version.minor}.${args.version.patch}-${args.version.prerelease}`);
+                }
+                else {
+                    this._semVer = new semver.SemVer(`${args.version.major}.${args.version.minor}.${args.version.patch}`);
+                }
             }
         }
         catch {
@@ -12005,9 +12010,6 @@ class GithubClient {
         return this._listSemVerTags(shouldFetchAllTags, [...fetchedTags, ...tags], page + 1);
     }
 }
-function createGithubClient(gihubAdapter) {
-    return new GithubClient(gihubAdapter);
-}
 
 ;// CONCATENATED MODULE: ./lib/main.js
 
@@ -12024,14 +12026,14 @@ async function run() {
         if (githubToken == null) {
             throw new Error('GITHUB_TOKEN is not provided');
         }
-        const github = createGithubClient(getGithubAdapter(githubToken));
+        const githubClient = new GithubClient(getGithubAdapter(githubToken));
         const actionDictionary = {
             autoIncrementPatch: autoIncrementPatch,
             makePrerelease: makePrerelease,
             createRelease: makeRelease,
         };
         await runAction({
-            githubClient: github,
+            githubClient,
             actionAdapter,
             actions: actionDictionary,
         });

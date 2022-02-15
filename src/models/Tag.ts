@@ -3,7 +3,9 @@ import { ReleaseType, SemVer, cmp, coerce, parse, rcompare } from 'semver';
 type TagArguments =
   | {
       prefix: string;
-      version: string | { major: number; minor: number; patch: number };
+      version:
+        | string
+        | { major: number; minor: number; patch: number; prerelease?: string };
     }
   | string;
 
@@ -32,9 +34,15 @@ export class Tag {
       if (typeof args.version === 'string') {
         this._semVer = new SemVer(args.version);
       } else {
-        this._semVer = new SemVer(
-          `${args.version.major}.${args.version.minor}.${args.version.patch}`,
-        );
+        if (args.version.prerelease) {
+          this._semVer = new SemVer(
+            `${args.version.major}.${args.version.minor}.${args.version.patch}-${args.version.prerelease}`,
+          );
+        } else {
+          this._semVer = new SemVer(
+            `${args.version.major}.${args.version.minor}.${args.version.patch}`,
+          );
+        }
       }
     } catch {
       throw new Error(`${args.version} can't be parsed into a version`);

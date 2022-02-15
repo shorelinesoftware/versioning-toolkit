@@ -4,7 +4,7 @@ import { autoIncrementPatch } from './actions/autoIncrementPatch';
 import { makePrerelease } from './actions/makePrerelease';
 import { makeRelease } from './actions/makeRelease';
 import { getGithubAdapter } from './github/gihubAdapter';
-import { createGithubClient } from './github/GithubClient';
+import { GithubClient } from './github/GithubClient';
 
 async function run() {
   const actionAdapter = getActionAdapter();
@@ -13,7 +13,7 @@ async function run() {
     if (githubToken == null) {
       throw new Error('GITHUB_TOKEN is not provided');
     }
-    const github = createGithubClient(getGithubAdapter(githubToken));
+    const githubClient = new GithubClient(getGithubAdapter(githubToken));
 
     const actionDictionary: Actions = {
       autoIncrementPatch,
@@ -22,7 +22,7 @@ async function run() {
     };
 
     await runAction({
-      githubClient: github,
+      githubClient,
       actionAdapter,
       actions: actionDictionary,
     });

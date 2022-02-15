@@ -108,7 +108,3 @@ export class GithubClient implements IGithubClient {
     );
   }
 }
-
-export function createGithubClient(gihubAdapter: GithubAdapter): IGithubClient {
-  return new GithubClient(gihubAdapter);
-}
