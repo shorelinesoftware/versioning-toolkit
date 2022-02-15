@@ -38,6 +38,20 @@ describe('actionRunner', () => {
       checkBranchExists: jest.fn<Promise<boolean>, [string]>(),
       getTag: jest.fn<Promise<GithubTag>, [string]>(),
     };
+
+    it('ensure action name is required', async () => {
+      await runAction({
+        githubClient: mockedGithubClient,
+        actionAdapter: mockedActionAdapter,
+        actions: mockedActions,
+      });
+      expect(mockedActionAdapter.getInput).toHaveBeenNthCalledWith(
+        1,
+        Inputs.actionName,
+        { required: true },
+      );
+    });
+
     describe('sets failed', () => {
       it('when exception is thrown', async () => {
         mockedActionAdapter.getInput.mockImplementation((name) => {
@@ -111,6 +125,15 @@ describe('actionRunner', () => {
           pushTag: false,
           sha: mockedActionAdapter.sha,
         });
+        expect(mockedActionAdapter.getInput).toHaveBeenNthCalledWith(
+          2,
+          Inputs.prefix,
+          { required: true },
+        );
+        expect(mockedActionAdapter.getInput).toHaveBeenNthCalledWith(
+          3,
+          Inputs.pushTag,
+        );
         assertSingleActionIsCalled('autoIncrementPatch');
       });
 
@@ -219,6 +242,15 @@ describe('actionRunner', () => {
           sha: 'abc',
           pushTag: false,
         });
+        expect(mockedActionAdapter.getInput).toHaveBeenNthCalledWith(
+          2,
+          Inputs.prefix,
+          { required: true },
+        );
+        expect(mockedActionAdapter.getInput).toHaveBeenNthCalledWith(
+          3,
+          Inputs.pushTag,
+        );
         assertSingleActionIsCalled('makePrerelease');
       });
       it('and sets output when tag is returned', async () => {
@@ -321,6 +353,24 @@ describe('actionRunner', () => {
         };
 
         expect(mockedActions.makeRelease).toHaveBeenCalledWith(params);
+        expect(mockedActionAdapter.getInput).toHaveBeenNthCalledWith(
+          2,
+          Inputs.releasePrefix,
+          { required: true },
+        );
+        expect(mockedActionAdapter.getInput).toHaveBeenNthCalledWith(
+          3,
+          Inputs.mainTag,
+          { required: true },
+        );
+        expect(mockedActionAdapter.getInput).toHaveBeenNthCalledWith(
+          4,
+          Inputs.minorSegment,
+        );
+        expect(mockedActionAdapter.getInput).toHaveBeenNthCalledWith(
+          5,
+          Inputs.majorSegment,
+        );
         assertSingleActionIsCalled('makeRelease');
       });
       it('and infos about new release and outputs result', async () => {

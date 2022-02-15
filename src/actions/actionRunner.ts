@@ -44,10 +44,10 @@ export async function runAction({
     const actionName = getInput(Inputs.actionName, {
       required: true,
     }) as ActionName;
-    const pushTag = getInput(Inputs.pushTag, { required: false }) === 'true';
     switch (actionName) {
       case 'autoIncrementPatch': {
         const prefix = getInput(Inputs.prefix, { required: true });
+        const pushTag = getInput(Inputs.pushTag) === 'true';
 
         const newTag = await actions.autoIncrementPatch({
           githubClient,
@@ -64,6 +64,7 @@ export async function runAction({
       }
       case 'makePrerelease': {
         const prefix = getInput(Inputs.prefix, { required: true });
+        const pushTag = getInput(Inputs.pushTag) === 'true';
         const newTag = await actions.makePrerelease({
           githubClient,
           tagPrefix: prefix,
