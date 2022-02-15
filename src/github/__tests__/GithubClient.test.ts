@@ -155,7 +155,7 @@ describe('GithubClient', () => {
     it('returns tag if ref exists', async () => {
       const rawTag = 'master-1.0.1';
       const sha = '123';
-      const ref = `refs/tags/${rawTag}`;
+      const ref = `tags/${rawTag}`;
       mockedGithubAdapter.getRef.mockReturnValueOnce(
         Promise.resolve({
           ref,

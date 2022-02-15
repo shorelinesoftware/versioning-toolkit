@@ -11966,7 +11966,7 @@ class GithubClient {
             return undefined;
         }
         try {
-            const ref = await this._githubAdapter.getRef(`refs/tags/${tag}`);
+            const ref = await this._githubAdapter.getRef(`tags/${tag}`);
             return {
                 value: parsedTag,
                 sha: ref.object.sha,
