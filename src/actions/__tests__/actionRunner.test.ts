@@ -5,11 +5,12 @@ import { Mocked } from '../../testUtils';
 import { Inputs } from '../../types';
 import { ActionAdapter } from '../actionAdapter';
 import { runAction, Actions } from '../actionRunner';
+import { MakeReleaseParams } from '../makeRelease';
 
 const mockedActions: Mocked<Actions> = {
   autoIncrementPatch: jest.fn(),
   makePrerelease: jest.fn(),
-  createRelease: jest.fn(),
+  makeRelease: jest.fn(),
 };
 
 const mockedActionAdapter: Mocked<ActionAdapter> = {
@@ -19,6 +20,13 @@ const mockedActionAdapter: Mocked<ActionAdapter> = {
   setOutput: jest.fn(),
   sha: jest.mocked('abc'),
 };
+
+function assertSingleActionIsCalled(excludedActionName: keyof Actions) {
+  // eslint-disable-next-line github/array-foreach
+  Object.entries(mockedActions)
+    .filter(([key]) => key !== excludedActionName)
+    .forEach(([, value]) => expect(value).not.toHaveBeenCalled());
+}
 
 describe('actionRunner', () => {
   describe('run action', () => {
@@ -103,8 +111,9 @@ describe('actionRunner', () => {
           pushTag: false,
           sha: mockedActionAdapter.sha,
         });
-        expect(mockedActions.makePrerelease).not.toBeCalled();
+        assertSingleActionIsCalled('autoIncrementPatch');
       });
+
       it('and sets output when tag is returned', async () => {
         const tag = new Tag('master-1.1.0');
         mockedActions.autoIncrementPatch.mockReturnValueOnce(
@@ -210,7 +219,7 @@ describe('actionRunner', () => {
           sha: 'abc',
           pushTag: false,
         });
-        expect(mockedActions.autoIncrementPatch).not.toBeCalled();
+        assertSingleActionIsCalled('makePrerelease');
       });
       it('and sets output when tag is returned', async () => {
         mockedActions.makePrerelease.mockReturnValueOnce(Promise.resolve(tag));
@@ -260,6 +269,86 @@ describe('actionRunner', () => {
         expect(mockedActionAdapter.info).toHaveBeenNthCalledWith(
           2,
           `pushed new tag ${tag.value}`,
+        );
+      });
+    });
+
+    describe('runs makeRelease', () => {
+      const mainTag = new Tag('master-1.0.0');
+      const releasePrefix = 'stable';
+      const majorSegment = '1';
+      const minorSegment = '1';
+      beforeAll(() => {
+        mockedActionAdapter.getInput.mockImplementation((name) => {
+          switch (name as Inputs) {
+            case Inputs.actionName:
+              return 'makeRelease';
+            case Inputs.mainTag:
+              return mainTag.value;
+            case Inputs.releasePrefix:
+              return releasePrefix;
+            case Inputs.pushTag:
+              return '';
+            case Inputs.majorSegment:
+              return majorSegment;
+            case Inputs.minorSegment:
+              return minorSegment;
+            default:
+              throw new Error('Input not found');
+          }
+        });
+      });
+      const release = {
+        newReleaseTag: new Tag('stable-1.0.0'),
+        newMainTag: mainTag,
+        newReleaseBranch: 'stable-1.0',
+      };
+
+      it('when action name is makeRelease', async () => {
+        mockedActions.makeRelease.mockReturnValueOnce(Promise.resolve(release));
+        await runAction({
+          githubClient: mockedGithubClient,
+          actionAdapter: mockedActionAdapter,
+          actions: mockedActions,
+        });
+
+        const params: MakeReleaseParams = {
+          githubClient: mockedGithubClient,
+          rowMainTag: mainTag.value,
+          releasePrefix,
+          rowMajorSegment: majorSegment,
+          rowMinorSegment: minorSegment,
+        };
+
+        expect(mockedActions.makeRelease).toHaveBeenCalledWith(params);
+        assertSingleActionIsCalled('makeRelease');
+      });
+      it('and infos about new release and outputs result', async () => {
+        mockedActions.makeRelease.mockReturnValueOnce(Promise.resolve(release));
+        await runAction({
+          githubClient: mockedGithubClient,
+          actionAdapter: mockedActionAdapter,
+          actions: mockedActions,
+        });
+        expect(mockedActionAdapter.info).toHaveBeenNthCalledWith(
+          1,
+          `new release tag ${release.newReleaseTag}`,
+        );
+        expect(mockedActionAdapter.info).toHaveBeenNthCalledWith(
+          2,
+          `new release branch ${release.newReleaseBranch}`,
+        );
+        expect(mockedActionAdapter.info).toHaveBeenNthCalledWith(
+          3,
+          `new main tag ${release.newMainTag}`,
+        );
+        expect(mockedActionAdapter.setOutput).toHaveBeenCalledWith(
+          'NEW_RELEASE',
+          {
+            newReleaseTag: release.newReleaseTag.value,
+            newMainTag: release.newMainTag.value,
+            newReleaseBranch: release.newReleaseBranch,
+          },
         );
       });
     });

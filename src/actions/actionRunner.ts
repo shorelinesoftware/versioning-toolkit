@@ -10,7 +10,7 @@ import { MakeRelease } from './makeRelease';
 export type Actions = {
   autoIncrementPatch: AutoIncrementPatch;
   makePrerelease: MakePrerelease;
-  createRelease: MakeRelease;
+  makeRelease: MakeRelease;
 };
 
 // * This type checks that Actions have all keys from ActionName
@@ -31,16 +31,15 @@ export async function runAction({
   actionAdapter,
   githubClient,
 }: ActionRunnerParams) {
+  const { setFailed, info, getInput, setOutput } = actionAdapter;
+
   const processTag = (newTag: Tag, isTagPushed: boolean) => {
-    const { info, setOutput } = actionAdapter;
     info(`new tag: ${newTag}`);
     if (isTagPushed) {
       info(`pushed new tag ${newTag}`);
     }
     setOutput('NEW_TAG', newTag.value);
   };
-
-  const { setFailed, info, getInput } = actionAdapter;
   try {
     const actionName = getInput(Inputs.actionName, {
       required: true,
@@ -74,19 +73,27 @@ export async function runAction({
         processTag(newTag, pushTag);
         return;
       }
-      case 'createRelease': {
+      case 'makeRelease': {
         const releasePrefix = getInput(Inputs.releasePrefix, {
           required: true,
         });
         const mainTag = getInput(Inputs.mainTag, { required: true });
         const minorSegment = getInput(Inputs.minorSegment);
         const majorSegment = getInput(Inputs.majorSegment);
-        await actions.createRelease({
+        const release = await actions.makeRelease({
           releasePrefix,
           githubClient,
           rowMainTag: mainTag,
           rowMajorSegment: majorSegment,
           rowMinorSegment: minorSegment,
+        });
+        info(`new release tag ${release.newReleaseTag}`);
+        info(`new release branch ${release.newReleaseBranch}`);
+        info(`new main tag ${release.newMainTag}`);
+        setOutput('NEW_RELEASE', {
+          newReleaseTag: release.newReleaseTag.value,
+          newMainTag: release.newMainTag.value,
+          newReleaseBranch: release.newReleaseBranch,
         });
         return;
       }

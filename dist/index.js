@@ -11558,15 +11558,14 @@ function assertUnreachable(value) {
 
 
 async function runAction({ actions, actionAdapter, githubClient, }) {
+    const { setFailed, info, getInput, setOutput } = actionAdapter;
     const processTag = (newTag, isTagPushed) => {
-        const { info, setOutput } = actionAdapter;
         info(`new tag: ${newTag}`);
         if (isTagPushed) {
             info(`pushed new tag ${newTag}`);
         }
         setOutput('NEW_TAG', newTag.value);
     };
-    const { setFailed, info, getInput } = actionAdapter;
     try {
         const actionName = getInput(Inputs.actionName, {
             required: true,
@@ -11599,19 +11598,27 @@ async function runAction({ actions, actionAdapter, githubClient, }) {
                 processTag(newTag, pushTag);
                 return;
             }
-            case 'createRelease': {
+            case 'makeRelease': {
                 const releasePrefix = getInput(Inputs.releasePrefix, {
                     required: true,
                 });
                 const mainTag = getInput(Inputs.mainTag, { required: true });
                 const minorSegment = getInput(Inputs.minorSegment);
                 const majorSegment = getInput(Inputs.majorSegment);
-                await actions.createRelease({
+                const release = await actions.makeRelease({
                     releasePrefix,
                     githubClient,
                     rowMainTag: mainTag,
                     rowMajorSegment: majorSegment,
                     rowMinorSegment: minorSegment,
+                });
+                info(`new release tag ${release.newReleaseTag}`);
+                info(`new release branch ${release.newReleaseBranch}`);
+                info(`new main tag ${release.newMainTag}`);
+                setOutput('NEW_RELEASE', {
+                    newReleaseTag: release.newReleaseTag.value,
+                    newMainTag: release.newMainTag.value,
+                    newReleaseBranch: release.newReleaseBranch,
                 });
                 return;
             }
@@ -12028,7 +12035,7 @@ async function run() {
         const actionDictionary = {
             autoIncrementPatch: autoIncrementPatch,
             makePrerelease: makePrerelease,
-            createRelease: makeRelease,
+            makeRelease: makeRelease,
         };
         await runAction({
             githubClient,

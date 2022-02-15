@@ -18,7 +18,7 @@ async function run() {
     const actionDictionary: Actions = {
       autoIncrementPatch,
       makePrerelease,
-      createRelease: makeRelease,
+      makeRelease,
     };
 
     await runAction({

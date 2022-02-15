@@ -1,7 +1,7 @@
 import { IGithubClient } from '../github/GithubClient';
 import { Tag } from '../models/Tag';
 
-export type CreateReleaseParams = {
+export type MakeReleaseParams = {
   githubClient: IGithubClient;
   rowMajorSegment?: string;
   rowMinorSegment?: string;
@@ -21,7 +21,7 @@ export async function makeRelease({
   rowMainTag,
   rowMajorSegment,
   rowMinorSegment,
-}: CreateReleaseParams) {
+}: MakeReleaseParams) {
   if (!releasePrefix) {
     throw new Error('missing releasePrefix');
   }
