@@ -1,6 +1,6 @@
 # This is a basic workflow that is manually triggered
 
-name: Make release
+name: 'make-release'
 
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
@@ -34,6 +34,7 @@ jobs:
         with:
           node-version: 16.x
       - name: make release
+        id: 'make_release'
         uses: ./
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -42,4 +43,5 @@ jobs:
           releasePrefix: ${{ github.event.inputs.releasePrefix }}
           majorSegment: ${{ github.event.inputs.majorSegment }}
           minorSegment: ${{ github.event.inputs.minorSegment }}
-          actionName: 'createRelease'
+          actionName: 'makeRelease'
+        run: 'echo ${{ steps.make_release.outputs.NEW_RELEASE }}'
