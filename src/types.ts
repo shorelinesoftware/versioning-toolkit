@@ -4,7 +4,8 @@ export enum Inputs {
   pushTag = 'pushTag',
   majorSegment = 'majorSegment',
   minorSegment = 'minorSegment',
-  releaseBranchNamePrefix = 'releaseBranchNamePrefix',
+  releasePrefix = 'releasePrefix',
+  mainTag = 'mainTag',
 }
 
 export type ActionName =

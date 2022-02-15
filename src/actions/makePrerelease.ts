@@ -31,7 +31,7 @@ export async function makePrerelease({
     version: `${prevTag.version}-${shortSha}`,
   });
   if (pushTag) {
-    await githubClient.createTag(newTag);
+    await githubClient.createTag(newTag, sha);
   }
   return newTag;
 }

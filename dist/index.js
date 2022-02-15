@@ -11517,106 +11517,6 @@ var __webpack_exports__ = {};
 // ESM COMPAT FLAG
 __nccwpck_require__.r(__webpack_exports__);
 
-;// CONCATENATED MODULE: ./lib/types.js
-var Inputs;
-(function (Inputs) {
-    Inputs["actionName"] = "actionName";
-    Inputs["prefix"] = "prefix";
-    Inputs["pushTag"] = "pushTag";
-    Inputs["majorSegment"] = "majorSegment";
-    Inputs["minorSegment"] = "minorSegment";
-    Inputs["releaseBranchNamePrefix"] = "releaseBranchNamePrefix";
-})(Inputs || (Inputs = {}));
-
-;// CONCATENATED MODULE: ./lib/utils.js
-function getBranchName(branch) {
-    return branch.replace('refs/heads/', '');
-}
-function assertUnreachable(value) {
-    throw new Error(`${value} should be unreachable`);
-}
-
-;// CONCATENATED MODULE: ./lib/actions/action.js
-
-
-class Action {
-    _githubClient;
-    _actionAdapter;
-    _actions;
-    constructor(githubClient, actionsAdapter, actions) {
-        this._actionAdapter = actionsAdapter;
-        this._githubClient = githubClient;
-        this._actions = actions;
-    }
-    processTag(newTag, isTagPushed) {
-        const { info, setOutput } = this._actionAdapter;
-        info(`new tag: ${newTag}`);
-        if (isTagPushed) {
-            info(`pushed new tag ${newTag}`);
-        }
-        setOutput('NEW_TAG', newTag.value);
-    }
-    async run() {
-        const { setFailed, info, getInput } = this._actionAdapter;
-        try {
-            const actionName = getInput(Inputs.actionName, {
-                required: true,
-            });
-            const pushTag = getInput(Inputs.pushTag, { required: false }) === 'true';
-            switch (actionName) {
-                case 'autoIncrementPatch': {
-                    const prefix = getInput(Inputs.prefix, { required: true });
-                    const newTag = await this._actions.autoIncrementPatch({
-                        githubClient: this._githubClient,
-                        prefix,
-                        pushTag,
-                    });
-                    if (newTag == null) {
-                        info(`can't make a new tag from ${prefix}`);
-                        return;
-                    }
-                    this.processTag(newTag, pushTag);
-                    return;
-                }
-                case 'makePrerelease': {
-                    const prefix = getInput(Inputs.prefix, { required: true });
-                    const newTag = await this._actions.makePrerelease({
-                        githubClient: this._githubClient,
-                        tagPrefix: prefix,
-                        sha: this._actionAdapter.sha,
-                        pushTag,
-                    });
-                    this.processTag(newTag, pushTag);
-                    return;
-                }
-                case 'createRelease': {
-                    const releaseBranchNamePrefix = getInput(Inputs.releaseBranchNamePrefix, {
-                        required: true,
-                    });
-                    const minorSegment = getInput(Inputs.minorSegment);
-                    const majorSegment = getInput(Inputs.majorSegment);
-                    await this._actions.createRelease({
-                        releaseBranchNamePrefix,
-                        githubClient: this._githubClient,
-                        mainBranchRawName: 'this._actionAdapter.ref',
-                        rowMajorSegment: majorSegment,
-                        rowMinorSegment: minorSegment,
-                    });
-                    return;
-                }
-                default: {
-                    assertUnreachable(actionName);
-                }
-            }
-        }
-        catch (error) {
-            if (error instanceof Error) {
-                setFailed(error);
-            }
-        }
-    }
-}
-
 // EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
 var core = __nccwpck_require__(2186);
 // EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
@@ -11632,6 +11532,99 @@ function getActionAdapter() {
         setFailed: core.setFailed,
         sha: github.context.sha,
     };
+}
+
+;// CONCATENATED MODULE: ./lib/types.js
+var Inputs;
+(function (Inputs) {
+    Inputs["actionName"] = "actionName";
+    Inputs["prefix"] = "prefix";
+    Inputs["pushTag"] = "pushTag";
+    Inputs["majorSegment"] = "majorSegment";
+    Inputs["minorSegment"] = "minorSegment";
+    Inputs["releasePrefix"] = "releasePrefix";
+    Inputs["mainTag"] = "mainTag";
+})(Inputs || (Inputs = {}));
+
+;// CONCATENATED MODULE: ./lib/utils.js
+function getBranchName(branch) {
+    return branch.replace('refs/heads/', '');
+}
+function assertUnreachable(value) {
+    throw new Error(`${value} should be unreachable`);
+}
+
+;// CONCATENATED MODULE: ./lib/actions/actionRunner.js
+
+
+async function runAction({ actions, actionAdapter, githubClient, }) {
+    const processTag = (newTag, isTagPushed) => {
+        const { info, setOutput } = actionAdapter;
+        info(`new tag: ${newTag}`);
+        if (isTagPushed) {
+            info(`pushed new tag ${newTag}`);
+        }
+        setOutput('NEW_TAG', newTag.value);
+    };
+    const { setFailed, info, getInput } = actionAdapter;
+    try {
+        const actionName = getInput(Inputs.actionName, {
+            required: true,
+        });
+        const pushTag = getInput(Inputs.pushTag, { required: false }) === 'true';
+        switch (actionName) {
+            case 'autoIncrementPatch': {
+                const prefix = getInput(Inputs.prefix, { required: true });
+                const newTag = await actions.autoIncrementPatch({
+                    githubClient,
+                    prefix,
+                    pushTag,
+                    sha: actionAdapter.sha,
+                });
+                if (newTag == null) {
+                    info(`can't make a new tag from ${prefix}`);
+                    return;
+                }
+                processTag(newTag, pushTag);
+                return;
+            }
+            case 'makePrerelease': {
+                const prefix = getInput(Inputs.prefix, { required: true });
+                const newTag = await actions.makePrerelease({
+                    githubClient,
+                    tagPrefix: prefix,
+                    sha: actionAdapter.sha,
+                    pushTag,
+                });
+                processTag(newTag, pushTag);
+                return;
+            }
+            case 'createRelease': {
+                const releasePrefix = getInput(Inputs.releasePrefix, {
+                    required: true,
+                });
+                const mainTag = getInput(Inputs.mainTag, { required: true });
+                const minorSegment = getInput(Inputs.minorSegment);
+                const majorSegment = getInput(Inputs.majorSegment);
+                await actions.createRelease({
+                    releasePrefix,
+                    githubClient,
+                    rowMainTag: mainTag,
+                    rowMajorSegment: majorSegment,
+                    rowMinorSegment: minorSegment,
+                });
+                return;
+            }
+            default: {
+                assertUnreachable(actionName);
+            }
+        }
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            setFailed(error);
+        }
+    }
 }
 
 // EXTERNAL MODULE: ./node_modules/semver/index.js
@@ -11794,7 +11787,7 @@ class Tag {
 ;// CONCATENATED MODULE: ./lib/actions/autoIncrementPatch.js
 
 
-async function autoIncrementPatch({ prefix, githubClient, pushTag, }) {
+async function autoIncrementPatch({ prefix, githubClient, pushTag, sha, }) {
     const tags = await githubClient.listSemVerTags();
     const prefixOrBranch = getBranchName(prefix);
     const prevTag = Tag.getHighestTagOrDefaultWithPrefix(tags, prefixOrBranch);
@@ -11803,56 +11796,9 @@ async function autoIncrementPatch({ prefix, githubClient, pushTag, }) {
     }
     const newTag = prevTag.bumpPatchSegment();
     if (pushTag) {
-        await githubClient.createTag(newTag);
+        await githubClient.createTag(newTag, sha);
     }
     return newTag;
-}
-
-;// CONCATENATED MODULE: ./lib/actions/createRelease.js
-
-
-function parseSegment(segment) {
-    return Number.parseInt(segment ?? '', 10) || undefined;
-}
-async function createRelease({ releaseBranchNamePrefix, githubClient, mainBranchRawName, rowMajorSegment, rowMinorSegment, }) {
-    if (!releaseBranchNamePrefix) {
-        throw new Error('missing branchNamePrefix');
-    }
-    if (!mainBranchRawName) {
-        throw new Error('missing mainBranchRawName');
-    }
-    const tags = await githubClient.listSemVerTags();
-    const minorSegment = parseSegment(rowMinorSegment);
-    const majorSegment = parseSegment(rowMajorSegment);
-    const prevReleaseTag = Tag.getHighestTagOrDefaultWithPrefix(tags, releaseBranchNamePrefix);
-    const mainTag = Tag.getHighestTagOrDefaultWithPrefix(tags, getBranchName(mainBranchRawName));
-    const newReleaseTag = new Tag({
-        prefix: prevReleaseTag.prefix,
-        version: {
-            major: majorSegment ?? mainTag.majorSegment,
-            minor: minorSegment ?? mainTag.minorSegment,
-            patch: majorSegment != null || minorSegment != null
-                ? 0
-                : prevReleaseTag.bumpPatchSegment().patchSegment,
-        },
-    });
-    const newMainTag = new Tag({
-        prefix: mainTag.prefix,
-        version: {
-            major: majorSegment ?? mainTag.majorSegment,
-            minor: minorSegment ?? mainTag.bumpMinorSegment().minorSegment,
-            patch: 0,
-        },
-    });
-    const newBranch = `${releaseBranchNamePrefix}-${newReleaseTag.majorSegment}.${newReleaseTag.minorSegment}`;
-    await githubClient.createTag(newReleaseTag);
-    await githubClient.createTag(newMainTag);
-    await githubClient.createBranch(newBranch);
-    return {
-        newReleaseTag,
-        newMainTag,
-        newBranch,
-    };
 }
 
 ;// CONCATENATED MODULE: ./lib/actions/makePrerelease.js
@@ -11874,9 +11820,59 @@ async function makePrerelease({ githubClient, pushTag, sha, tagPrefix, }) {
         version: `${prevTag.version}-${shortSha}`,
     });
     if (pushTag) {
-        await githubClient.createTag(newTag);
+        await githubClient.createTag(newTag, sha);
     }
     return newTag;
+}
+
+;// CONCATENATED MODULE: ./lib/actions/makeRelease.js
+
+function parseSegment(segment) {
+    return Number.parseInt(segment ?? '', 10) || undefined;
+}
+async function makeRelease({ releasePrefix, githubClient, rowMainTag, rowMajorSegment, rowMinorSegment, }) {
+    if (!releasePrefix) {
+        throw new Error('missing branchNamePrefix');
+    }
+    if (!rowMainTag) {
+        throw new Error('missing baseTag');
+    }
+    const tags = await githubClient.listSemVerTags();
+    const mainTag = await githubClient.getTag(rowMainTag);
+    if (mainTag == null) {
+        throw new Error(`Can not find tag ${mainTag} in repository`);
+    }
+    const { value: mainTagValue, sha } = mainTag;
+    const minorSegment = parseSegment(rowMinorSegment);
+    const majorSegment = parseSegment(rowMajorSegment);
+    const prevReleaseTag = Tag.getHighestTagOrDefaultWithPrefix(tags, releasePrefix);
+    const newReleaseTag = new Tag({
+        prefix: prevReleaseTag.prefix,
+        version: {
+            major: majorSegment ?? mainTagValue.majorSegment,
+            minor: minorSegment ?? mainTagValue.minorSegment,
+            patch: majorSegment != null || minorSegment != null
+                ? 0
+                : prevReleaseTag.bumpPatchSegment().patchSegment,
+        },
+    });
+    const newMainTag = new Tag({
+        prefix: mainTagValue.prefix,
+        version: {
+            major: majorSegment ?? mainTagValue.majorSegment,
+            minor: (minorSegment ?? mainTagValue.minorSegment) + 1,
+            patch: 0,
+        },
+    });
+    const newBranch = `${releasePrefix}-${newReleaseTag.majorSegment}.${newReleaseTag.minorSegment}`;
+    await githubClient.createTag(newReleaseTag, sha);
+    await githubClient.createTag(newMainTag, sha);
+    await githubClient.createBranch(newBranch, sha);
+    return {
+        newReleaseTag,
+        newMainTag,
+        newBranch,
+    };
 }
 
 ;// CONCATENATED MODULE: ./lib/github/gihubAdapter.js
@@ -11892,12 +11888,20 @@ function getGithubAdapter(githubToken) {
             })
                 .then((response) => response.data);
         },
-        createRef: async (ref) => {
+        createRef: async (ref, sha) => {
             await octokit.rest.git.createRef({
                 ...github.context.repo,
                 ref,
-                sha: github.context.sha,
+                sha,
             });
+        },
+        getRef: async (ref) => {
+            return octokit.rest.git
+                .getRef({
+                ...github.context.repo,
+                ref,
+            })
+                .then((response) => response.data);
         },
         getBranch: async (branch) => {
             return await octokit.rest.repos
@@ -11931,7 +11935,6 @@ function isNotFoundError(error) {
 ;// CONCATENATED MODULE: ./lib/github/GithubClient.js
 
 
-
 class GithubClient {
     _githubAdapter;
     constructor(githubAdapter) {
@@ -11940,11 +11943,30 @@ class GithubClient {
     async listSemVerTags(shouldFetchAllTags = true, page = 1) {
         return this._listSemVerTags(shouldFetchAllTags, [], page).then((tags) => tags ?? []);
     }
-    async createBranch(branchName) {
-        await this._githubAdapter.createRef(`refs/heads/${branchName}`);
+    async createBranch(branchName, sha) {
+        await this._githubAdapter.createRef(`refs/heads/${branchName}`, sha);
     }
-    async createTag(tag) {
-        await this._githubAdapter.createRef(`refs/tags/${tag}`);
+    async createTag(tag, sha) {
+        await this._githubAdapter.createRef(`refs/tags/${tag}`, sha);
+    }
+    async getTag(tag) {
+        const parsedTag = Tag.parse(tag);
+        if (!parsedTag) {
+            return undefined;
+        }
+        try {
+            const ref = await this._githubAdapter.getRef(`refs/tags/${tag}`);
+            return {
+                value: parsedTag,
+                sha: ref.object.sha,
+            };
+        }
+        catch (e) {
+            if (isNotFoundError(e)) {
+                return undefined;
+            }
+            throw e;
+        }
     }
     async checkBranchExists(branchName) {
         return this._githubAdapter
@@ -11983,11 +12005,12 @@ class GithubClient {
         return this._listSemVerTags(shouldFetchAllTags, [...fetchedTags, ...tags], page + 1);
     }
 }
-function createGithubClient(githubToken) {
-    return new GithubClient(getGithubAdapter(githubToken));
+function createGithubClient(gihubAdapter) {
+    return new GithubClient(gihubAdapter);
 }
 
 ;// CONCATENATED MODULE: ./lib/main.js
+
 
 
 
@@ -12001,14 +12024,17 @@ async function run() {
         if (githubToken == null) {
             throw new Error('GITHUB_TOKEN is not provided');
         }
-        const github = createGithubClient(githubToken);
+        const github = createGithubClient(getGithubAdapter(githubToken));
         const actionDictionary = {
             autoIncrementPatch: autoIncrementPatch,
             makePrerelease: makePrerelease,
-            createRelease: createRelease,
+            createRelease: makeRelease,
         };
-        const action = new Action(github, actionAdapter, actionDictionary);
-        await action.run();
+        await runAction({
+            githubClient: github,
+            actionAdapter,
+            actions: actionDictionary,
+        });
     }
     catch (e) {
         if (e instanceof Error) {

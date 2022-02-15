@@ -1,9 +1,10 @@
 import { IGithubClient } from '../../github/GithubClient';
+import { GithubTag } from '../../github/types';
 import { Tag } from '../../models/Tag';
 import { Mocked } from '../../testUtils';
 import { Inputs } from '../../types';
-import { Action, Actions } from '../action';
 import { ActionAdapter } from '../actionAdapter';
+import { runAction, Actions } from '../actionRunner';
 
 const mockedActions: Mocked<Actions> = {
   autoIncrementPatch: jest.fn(),
@@ -19,14 +20,15 @@ const mockedActionAdapter: Mocked<ActionAdapter> = {
   sha: jest.mocked('abc'),
 };
 
-describe('action', () => {
-  describe('run', () => {
+describe('actionRunner', () => {
+  describe('run action', () => {
     const mockedGithubClient: IGithubClient = {
       createTag: jest.fn<Promise<void>, [Tag]>(),
       listSemVerTags: async () => Promise.resolve([new Tag('master-0.1.1')]),
       createBranch: jest.fn<Promise<void>, [string]>(),
       deleteBranch: jest.fn<Promise<boolean>, [string]>(),
       checkBranchExists: jest.fn<Promise<boolean>, [string]>(),
+      getTag: jest.fn<Promise<GithubTag>, [string]>(),
     };
     describe('sets failed', () => {
       it('when exception is thrown', async () => {
@@ -46,12 +48,11 @@ describe('action', () => {
         mockedActions.autoIncrementPatch.mockImplementationOnce(() => {
           throw new Error('error');
         });
-        const action = new Action(
-          mockedGithubClient,
-          mockedActionAdapter,
-          mockedActions,
-        );
-        await action.run();
+        await runAction({
+          githubClient: mockedGithubClient,
+          actionAdapter: mockedActionAdapter,
+          actions: mockedActions,
+        });
         expect(mockedActionAdapter.setFailed).toHaveBeenCalledWith(
           new Error('error'),
         );
@@ -59,13 +60,11 @@ describe('action', () => {
       it('when action name is wrong', async () => {
         const wrongActionName = 'wrongActionName';
         mockedActionAdapter.getInput.mockReturnValueOnce(wrongActionName);
-
-        const action = new Action(
-          mockedGithubClient,
-          mockedActionAdapter,
-          mockedActions,
-        );
-        await action.run();
+        await runAction({
+          githubClient: mockedGithubClient,
+          actionAdapter: mockedActionAdapter,
+          actions: mockedActions,
+        });
         expect(mockedActionAdapter.setFailed).toHaveBeenCalledWith(
           new Error(`${wrongActionName} should be unreachable`),
         );
@@ -93,16 +92,16 @@ describe('action', () => {
         mockedActions.autoIncrementPatch.mockReturnValueOnce(
           Promise.resolve(new Tag('master-1.1.0')),
         );
-        const action = new Action(
-          mockedGithubClient,
-          mockedActionAdapter,
-          mockedActions,
-        );
-        await action.run();
+        await runAction({
+          githubClient: mockedGithubClient,
+          actionAdapter: mockedActionAdapter,
+          actions: mockedActions,
+        });
         expect(mockedActions.autoIncrementPatch).toHaveBeenCalledWith({
           githubClient: mockedGithubClient,
           prefix,
           pushTag: false,
+          sha: mockedActionAdapter.sha,
         });
         expect(mockedActions.makePrerelease).not.toBeCalled();
       });
@@ -111,12 +110,11 @@ describe('action', () => {
         mockedActions.autoIncrementPatch.mockReturnValueOnce(
           Promise.resolve(new Tag('master-1.1.0')),
         );
-        const action = new Action(
-          mockedGithubClient,
-          mockedActionAdapter,
-          mockedActions,
-        );
-        await action.run();
+        await runAction({
+          githubClient: mockedGithubClient,
+          actionAdapter: mockedActionAdapter,
+          actions: mockedActions,
+        });
         expect(mockedActionAdapter.setOutput).toHaveBeenCalledWith(
           'NEW_TAG',
           tag.value,
@@ -127,12 +125,11 @@ describe('action', () => {
           Promise.resolve(Promise.resolve(undefined)),
         );
 
-        const action = new Action(
-          mockedGithubClient,
-          mockedActionAdapter,
-          mockedActions,
-        );
-        await action.run();
+        await runAction({
+          githubClient: mockedGithubClient,
+          actionAdapter: mockedActionAdapter,
+          actions: mockedActions,
+        });
         expect(mockedActionAdapter.info).toHaveBeenCalledWith(
           `can't make a new tag from ${prefix}`,
         );
@@ -142,12 +139,11 @@ describe('action', () => {
         mockedActions.autoIncrementPatch.mockReturnValueOnce(
           Promise.resolve(new Tag(tag)),
         );
-        const action = new Action(
-          mockedGithubClient,
-          mockedActionAdapter,
-          mockedActions,
-        );
-        await action.run();
+        await runAction({
+          githubClient: mockedGithubClient,
+          actionAdapter: mockedActionAdapter,
+          actions: mockedActions,
+        });
         expect(mockedActionAdapter.info).toHaveBeenCalledWith(
           `new tag: ${tag}`,
         );
@@ -171,12 +167,11 @@ describe('action', () => {
           }
         });
 
-        const action = new Action(
-          mockedGithubClient,
-          mockedActionAdapter,
-          mockedActions,
-        );
-        await action.run();
+        await runAction({
+          githubClient: mockedGithubClient,
+          actionAdapter: mockedActionAdapter,
+          actions: mockedActions,
+        });
         expect(mockedActionAdapter.info).toHaveBeenNthCalledWith(
           2,
           `pushed new tag ${tag.value}`,
@@ -204,12 +199,11 @@ describe('action', () => {
 
       it('when action name is makePrerelease', async () => {
         mockedActions.makePrerelease.mockReturnValueOnce(Promise.resolve(tag));
-        const action = new Action(
-          mockedGithubClient,
-          mockedActionAdapter,
-          mockedActions,
-        );
-        await action.run();
+        await runAction({
+          githubClient: mockedGithubClient,
+          actionAdapter: mockedActionAdapter,
+          actions: mockedActions,
+        });
         expect(mockedActions.makePrerelease).toHaveBeenCalledWith({
           githubClient: mockedGithubClient,
           tagPrefix: 'master',
@@ -221,12 +215,11 @@ describe('action', () => {
       it('and sets output when tag is returned', async () => {
         mockedActions.makePrerelease.mockReturnValueOnce(Promise.resolve(tag));
 
-        const action = new Action(
-          mockedGithubClient,
-          mockedActionAdapter,
-          mockedActions,
-        );
-        await action.run();
+        await runAction({
+          githubClient: mockedGithubClient,
+          actionAdapter: mockedActionAdapter,
+          actions: mockedActions,
+        });
         expect(mockedActionAdapter.setOutput).toHaveBeenCalledWith(
           'NEW_TAG',
           tag.value,
@@ -234,12 +227,11 @@ describe('action', () => {
       });
       it('and informs about new tag', async () => {
         mockedActions.makePrerelease.mockReturnValueOnce(Promise.resolve(tag));
-        const action = new Action(
-          mockedGithubClient,
-          mockedActionAdapter,
-          mockedActions,
-        );
-        await action.run();
+        await runAction({
+          githubClient: mockedGithubClient,
+          actionAdapter: mockedActionAdapter,
+          actions: mockedActions,
+        });
         expect(mockedActionAdapter.info).toHaveBeenCalledWith(
           `new tag: ${tag}`,
         );
@@ -260,12 +252,11 @@ describe('action', () => {
           }
         });
 
-        const action = new Action(
-          mockedGithubClient,
-          mockedActionAdapter,
-          mockedActions,
-        );
-        await action.run();
+        await runAction({
+          githubClient: mockedGithubClient,
+          actionAdapter: mockedActionAdapter,
+          actions: mockedActions,
+        });
         expect(mockedActionAdapter.info).toHaveBeenNthCalledWith(
           2,
           `pushed new tag ${tag.value}`,

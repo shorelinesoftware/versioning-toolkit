@@ -1,4 +1,5 @@
 import { IGithubClient } from '../../github/GithubClient';
+import { GithubTag } from '../../github/types';
 import { Tag } from '../../models/Tag';
 import { Mocked } from '../../testUtils';
 import { makePrerelease } from '../makePrerelease';
@@ -15,11 +16,12 @@ describe('makePrerelease', () => {
   const shortSha = '1ae1b19';
 
   const mockedGithubClient: Mocked<IGithubClient> = {
-    createTag: jest.fn<Promise<void>, [Tag]>(),
+    createTag: jest.fn<Promise<void>, [Tag, string]>(),
     listSemVerTags: jest.fn(async () => Promise.resolve(tags)),
-    createBranch: jest.fn<Promise<void>, [string]>(),
+    createBranch: jest.fn<Promise<void>, [string, string]>(),
     deleteBranch: jest.fn<Promise<boolean>, [string]>(),
     checkBranchExists: jest.fn<Promise<boolean>, [string]>(),
+    getTag: jest.fn<Promise<GithubTag>, [string]>(),
   };
   it('pushes new tag when pushTag is true', async () => {
     const newTag = await makePrerelease({
@@ -28,7 +30,7 @@ describe('makePrerelease', () => {
       sha,
       pushTag: true,
     });
-    expect(mockedGithubClient.createTag).toHaveBeenCalledWith(newTag);
+    expect(mockedGithubClient.createTag).toHaveBeenCalledWith(newTag, sha);
   });
   it('does not push new tag when pushTag is false', async () => {
     await makePrerelease({

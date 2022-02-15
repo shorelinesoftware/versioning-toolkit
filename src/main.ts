@@ -1,8 +1,9 @@
-import { Action, Actions } from './actions/action';
 import { getActionAdapter } from './actions/actionAdapter';
+import { runAction, Actions } from './actions/actionRunner';
 import { autoIncrementPatch } from './actions/autoIncrementPatch';
-import { createRelease } from './actions/createRelease';
 import { makePrerelease } from './actions/makePrerelease';
+import { makeRelease } from './actions/makeRelease';
+import { getGithubAdapter } from './github/gihubAdapter';
 import { createGithubClient } from './github/GithubClient';
 
 async function run() {
@@ -12,16 +13,19 @@ async function run() {
     if (githubToken == null) {
       throw new Error('GITHUB_TOKEN is not provided');
     }
-    const github = createGithubClient(githubToken);
+    const github = createGithubClient(getGithubAdapter(githubToken));
 
     const actionDictionary: Actions = {
       autoIncrementPatch,
       makePrerelease,
-      createRelease,
+      createRelease: makeRelease,
     };
 
-    const action = new Action(github, actionAdapter, actionDictionary);
-    await action.run();
+    await runAction({
+      githubClient: github,
+      actionAdapter,
+      actions: actionDictionary,
+    });
   } catch (e) {
     if (e instanceof Error) {
       actionAdapter.setFailed(e);
