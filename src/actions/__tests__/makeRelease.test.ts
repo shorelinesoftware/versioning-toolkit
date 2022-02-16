@@ -52,7 +52,7 @@ describe('make release', () => {
       githubClient: mockedGithubClient,
       rowMainTag: mainTag.value,
     });
-    expect(release.newReleaseTag.value).toBe('release-0.1.1');
+    expect(release.newReleaseTag.value).toBe('release-0.1.0');
     expect(release.newReleaseBranch).toBe('release-0.1');
     expect(release.newMainTag.value).toBe('master-0.2.0');
     expect(mockedGithubClient.createTag).toHaveBeenNthCalledWith(
@@ -130,7 +130,7 @@ describe('make release', () => {
       rowMajorSegment: 'abc',
       rowMinorSegment: 'abc',
     });
-    expect(release.newReleaseTag.value).toBe('release-0.1.1');
+    expect(release.newReleaseTag.value).toBe('release-0.1.0');
     expect(release.newReleaseBranch).toBe('release-0.1');
     expect(release.newMainTag.value).toBe('master-0.2.0');
   });

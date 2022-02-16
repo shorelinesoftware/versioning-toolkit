@@ -11862,9 +11862,7 @@ async function makeRelease({ releasePrefix, githubClient, rowMainTag, rowMajorSe
         version: {
             major: majorSegment ?? mainTagValue.majorSegment,
             minor: minorSegment ?? mainTagValue.minorSegment,
-            patch: majorSegment != null || minorSegment != null
-                ? 0
-                : mainTagValue.patchSegment,
+            patch: 0,
         },
     });
     const newMainTag = new Tag({
