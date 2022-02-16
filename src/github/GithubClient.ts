@@ -1,6 +1,6 @@
 import { Tag } from '../models/Tag';
-import { getGithubAdapter } from './gihubAdapter';
-import { GithubAdapter } from './types';
+import { GithubAdapter, GithubTag } from './types';
+import { isNotFoundError } from './utils';
 
 export interface IGithubClient {
   listSemVerTags: (
@@ -8,9 +8,15 @@ export interface IGithubClient {
     page?: number,
   ) => Promise<Tag[]>;
 
-  createBranch: (branchName: string) => Promise<void>;
+  createBranch: (branchName: string, sha: string) => Promise<void>;
 
-  createTag: (tag: Tag) => Promise<void>;
+  createTag: (tag: Tag, sha: string) => Promise<void>;
+
+  deleteBranch: (branch: string) => Promise<boolean>;
+
+  checkBranchExists: (branch: string) => Promise<boolean>;
+
+  getTag: (tag: string) => Promise<GithubTag | undefined>;
 }
 
 export class GithubClient implements IGithubClient {
@@ -26,12 +32,55 @@ export class GithubClient implements IGithubClient {
     );
   }
 
-  async createBranch(branchName: string) {
-    await this._githubAdapter.createRef(`refs/heads/${branchName}`);
+  async createBranch(branchName: string, sha: string) {
+    await this._githubAdapter.createRef(`refs/heads/${branchName}`, sha);
   }
 
-  async createTag(tag: Tag) {
-    await this._githubAdapter.createRef(`refs/tags/${tag}`);
+  async createTag(tag: Tag, sha: string) {
+    await this._githubAdapter.createRef(`refs/tags/${tag}`, sha);
+  }
+
+  async getTag(tag: string) {
+    const parsedTag = Tag.parse(tag);
+    if (!parsedTag) {
+      return undefined;
+    }
+    try {
+      const ref = await this._githubAdapter.getRef(`tags/${tag}`);
+      return {
+        value: parsedTag,
+        sha: ref.object.sha,
+      };
+    } catch (e) {
+      if (isNotFoundError(e)) {
+        return undefined;
+      }
+      throw e;
+    }
+  }
+
+  async checkBranchExists(branchName: string) {
+    return this._githubAdapter
+      .getBranch(branchName)
+      .then(() => true)
+      .catch((error) => {
+        if (isNotFoundError(error)) {
+          return false;
+        }
+        throw error;
+      });
+  }
+
+  async deleteBranch(branchName: string) {
+    return this._githubAdapter
+      .deleteRef(`refs/heads/${branchName}`)
+      .then(() => true)
+      .catch((error) => {
+        if (isNotFoundError(error)) {
+          return false;
+        }
+        throw error;
+      });
   }
 
   private async _listSemVerTags(
@@ -58,8 +107,4 @@ export class GithubClient implements IGithubClient {
       page + 1,
     );
   }
-}
-
-export function createGithubClient(githubToken: string): IGithubClient {
-  return new GithubClient(getGithubAdapter(githubToken));
 }

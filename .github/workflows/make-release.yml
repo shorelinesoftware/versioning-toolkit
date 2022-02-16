@@ -1,0 +1,47 @@
+# This is a basic workflow that is manually triggered
+
+name: 'make-release'
+
+# Controls when the action will run. Workflow runs when manually triggered using the UI
+# or API.
+on:
+  workflow_dispatch:
+    # Inputs the workflow accepts.
+    inputs:
+      majorSegment:
+        description: 'major segment of the tag'
+        required: false
+      minorSegment:
+        description: 'minor segment of the tag'
+        required: false
+      mainTag:
+        description: 'tag from which release is created'
+        required: true
+      releasePrefix:
+        description: 'prefix used for release tag and branch'
+        required: true
+
+jobs:
+  make-release:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set Node.js 16.x
+        uses: actions/setup-node@v2.5.1
+        with:
+          node-version: 16.x
+      - name: make release
+        id: 'make_release'
+        uses: ./
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mainTag: ${{ github.event.inputs.mainTag }}
+          releasePrefix: ${{ github.event.inputs.releasePrefix }}
+          majorSegment: ${{ github.event.inputs.majorSegment }}
+          minorSegment: ${{ github.event.inputs.minorSegment }}
+          actionName: 'makeRelease'
+      - run: 'echo ${{ steps.make_release.outputs.NEW_RELEASE }}'

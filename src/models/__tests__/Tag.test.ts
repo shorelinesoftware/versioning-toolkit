@@ -32,10 +32,23 @@ describe('Tag', () => {
     expect(new Tag('master-0.0.0').value).toBe(expected);
   });
   it('constructor creates tag', () => {
+    const expected = 'master-0.0.0';
+    const expectedWithPrerelese = 'master-0.0.0-abc';
+
     const tag1 = new Tag('master-0.0.0');
     const tag2 = new Tag({ prefix: 'master', version: '0.0.0' });
-    expect(tag1.value).toBe(tag2.value);
-    expect(tag1.value).toBe('master-0.0.0');
+    const tag3 = new Tag({
+      prefix: 'master',
+      version: { major: 0, minor: 0, patch: 0 },
+    });
+    const tag4 = new Tag({
+      prefix: 'master',
+      version: { major: 0, minor: 0, patch: 0, prerelease: 'abc' },
+    });
+    expect(tag1.value).toBe(expected);
+    expect(tag2.value).toBe(expected);
+    expect(tag3.value).toBe(expected);
+    expect(tag4.value).toBe(expectedWithPrerelese);
   });
   it('constructor throws exception if args are invalid', () => {
     expect(() => new Tag('0.0.0')).toThrow(`0.0.0 can't be parsed into a tag`);
@@ -245,6 +258,34 @@ describe('Tag', () => {
       const tagCopy = tag.copy();
       expect(tag).not.toBe(tagCopy);
       expect(tag).toStrictEqual(tagCopy);
+    });
+  });
+
+  describe('segment getters', () => {
+    const major = 1;
+    const minor = 2;
+    const patch = 3;
+    const prerelease = 'abc';
+    const tag = new Tag({
+      prefix: 'master',
+      version: {
+        major,
+        minor,
+        patch,
+        prerelease,
+      },
+    });
+    it('returns major segment of tag', () => {
+      expect(tag.majorSegment).toBe(major);
+    });
+    it('returns minor segment of tag', () => {
+      expect(tag.minorSegment).toBe(minor);
+    });
+    it('returns patch segment of tag', () => {
+      expect(tag.patchSegment).toBe(patch);
+    });
+    it('returns prerelease segment of tag', () => {
+      expect(tag.prereleaseSegment).toBe(prerelease);
     });
   });
 });

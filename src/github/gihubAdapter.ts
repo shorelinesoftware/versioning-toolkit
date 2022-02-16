@@ -13,12 +13,36 @@ export function getGithubAdapter(githubToken: string): GithubAdapter {
         })
         .then((response) => response.data);
     },
-    createRef: async (ref) => {
+    createRef: async (ref, sha) => {
       await octokit.rest.git.createRef({
         ...context.repo,
         ref,
-        sha: context.sha,
+        sha,
       });
+    },
+    getRef: async (ref) => {
+      return octokit.rest.git
+        .getRef({
+          ...context.repo,
+          ref,
+        })
+        .then((response) => response.data);
+    },
+    getBranch: async (branch) => {
+      return await octokit.rest.repos
+        .getBranch({
+          ...context.repo,
+          branch,
+        })
+        .then((response) => response.data.name);
+    },
+    deleteRef: async (ref: string) => {
+      return await octokit.rest.git
+        .deleteRef({
+          ...context.repo,
+          ref,
+        })
+        .then(() => undefined);
     },
   };
 }
