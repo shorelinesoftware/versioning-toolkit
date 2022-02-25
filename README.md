@@ -37,7 +37,7 @@ uses: shorelinesoftware/versioning-toolkit@v0.0.1
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 with:
-  branch: 'master'
+  prefix: 'master'
   actionName: 'autoIncrementPatch'
   pushTag: 'true'
   
