@@ -13,7 +13,7 @@ This action provides a set of helpers for semantic versioning:
 
 Finds the latest tag by branch name and increments is patch segment. If there are no previous tags that match the branch, the default tag will be created: {branch}-0.0.1
 
-##Inputs 
+## Inputs 
 
 ### `prefix`
 
@@ -43,7 +43,7 @@ with:
   
 ```
 
-##Outputs
+## Outputs
 
 `NEW_TAG`
 
@@ -53,7 +53,7 @@ The newly created tag.
 
 Makes prerelease tag with the provided prefix. Uses short commit sha as prerelease segment.
 
-##Inputs
+## Inputs
 
 
 ### `actionName`
@@ -68,7 +68,7 @@ Makes prerelease tag with the provided prefix. Uses short commit sha as prerelea
 
 **Optional** whether to push new tag or not. Must be **'true' or 'false'**. 'false' by default
 
-##Outputs
+## Outputs
 
 `NEW_TAG`
 
