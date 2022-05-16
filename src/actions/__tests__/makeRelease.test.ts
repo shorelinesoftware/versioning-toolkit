@@ -6,7 +6,9 @@ import { makeRelease } from '../makeRelease';
 
 describe('make release', () => {
   const sha = '1ae1b19044adfe98998f4e1ab04da2e698cce6df';
-
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
   const mockedGithubClient: Mocked<IGithubClient> = {
     createTag: jest.fn<Promise<void>, [Tag, string]>(),
     listSemVerTags: jest.fn(),
@@ -15,7 +17,7 @@ describe('make release', () => {
     checkBranchExists: jest.fn<Promise<boolean>, [string]>(),
     getTag: jest.fn<Promise<GithubTag>, [string]>(),
   };
-  it('throws exception if wrong arguments passed', async () => {
+  it('throws exception if release prefix is empty', async () => {
     await expect(async () =>
       makeRelease({
         releasePrefix: '',
@@ -23,6 +25,8 @@ describe('make release', () => {
         rowMainTag: 'stable-1.0.0',
       }),
     ).rejects.toThrow('missing releasePrefix');
+  });
+  it('throws exception if rowMainTag main tag is empty', async () => {
     await expect(async () =>
       makeRelease({
         releasePrefix: 'stable',
@@ -32,7 +36,15 @@ describe('make release', () => {
     ).rejects.toThrow('missing rowMainTag');
   });
   it('throws exception if cannot find main tag', async () => {
-    const rowMainTag = 'master-10.1.1';
+    let rowMainTag = 'master-10.1.1';
+    await expect(async () =>
+      makeRelease({
+        releasePrefix: 'stable',
+        githubClient: mockedGithubClient,
+        rowMainTag,
+      }),
+    ).rejects.toThrow(`Can not find tag ${rowMainTag} in repository`);
+    rowMainTag = '123';
     await expect(async () =>
       makeRelease({
         releasePrefix: 'stable',
@@ -41,7 +53,34 @@ describe('make release', () => {
       }),
     ).rejects.toThrow(`Can not find tag ${rowMainTag} in repository`);
   });
-  it('creates release with the given release prefix', async () => {
+
+  it('throws exception if rowMajorSegment or  rowMinorSegment can not be parsed', async () => {
+    const mainTag = new Tag('master-0.1.1');
+    mockedGithubClient.getTag.mockReturnValueOnce(
+      Promise.resolve({ value: mainTag, sha }),
+    );
+
+    await expect(async () =>
+      makeRelease({
+        releasePrefix: 'release',
+        githubClient: mockedGithubClient,
+        rowMainTag: mainTag.value,
+        rowMajorSegment: 'abc',
+        rowMinorSegment: '1',
+      }),
+    ).rejects.toThrow('Minor or major segment can not be parsed');
+    await expect(async () =>
+      makeRelease({
+        releasePrefix: 'release',
+        githubClient: mockedGithubClient,
+        rowMainTag: mainTag.value,
+        rowMajorSegment: '1',
+        rowMinorSegment: 'abc',
+      }),
+    ).rejects.toThrow('Minor or major segment can not be parsed');
+  });
+
+  it('creates release from the given main tag', async () => {
     const mainTag = new Tag('master-0.1.1');
     mockedGithubClient.getTag.mockReturnValueOnce(
       Promise.resolve({ value: mainTag, sha }),
@@ -70,21 +109,31 @@ describe('make release', () => {
       sha,
     );
   });
-  it('creates release with the given major segment', async () => {
-    const mainTag = new Tag('master-0.1.1');
-    mockedGithubClient.getTag.mockReturnValueOnce(
+  it('creates release with the given major segment and zeroes patch and minor segments if major segment is new', async () => {
+    const mainTag = new Tag('master-1.1.1');
+    mockedGithubClient.getTag.mockReturnValue(
       Promise.resolve({ value: mainTag, sha }),
     );
 
-    const release = await makeRelease({
+    const release1 = await makeRelease({
       releasePrefix: 'release',
       githubClient: mockedGithubClient,
       rowMainTag: mainTag.value,
-      rowMajorSegment: '10',
+      rowMajorSegment: '2',
     });
-    expect(release.newReleaseTag.value).toBe('release-10.1.0');
-    expect(release.newReleaseBranch).toBe('release-10.1');
-    expect(release.newMainTag.value).toBe('master-10.2.0');
+    expect(release1.newReleaseTag.value).toBe('release-2.0.0');
+    expect(release1.newReleaseBranch).toBe('release-2.0');
+    expect(release1.newMainTag.value).toBe('master-2.1.0');
+
+    const release2 = await makeRelease({
+      releasePrefix: 'release',
+      githubClient: mockedGithubClient,
+      rowMainTag: mainTag.value,
+      rowMajorSegment: '1',
+    });
+    expect(release2.newReleaseTag.value).toBe('release-1.1.0');
+    expect(release2.newReleaseBranch).toBe('release-1.1');
+    expect(release2.newMainTag.value).toBe('master-1.2.0');
   });
   it('creates release with the given minor segment', async () => {
     const mainTag = new Tag('master-0.1.1');
@@ -117,21 +166,5 @@ describe('make release', () => {
     expect(release.newReleaseTag.value).toBe('release-10.10.0');
     expect(release.newReleaseBranch).toBe('release-10.10');
     expect(release.newMainTag.value).toBe('master-10.11.0');
-  });
-  it('creates release with major and minor from main tag if passed segments can not be parsed', async () => {
-    const mainTag = new Tag('master-0.1.1');
-    mockedGithubClient.getTag.mockReturnValueOnce(
-      Promise.resolve({ value: mainTag, sha }),
-    );
-    const release = await makeRelease({
-      releasePrefix: 'release',
-      githubClient: mockedGithubClient,
-      rowMainTag: mainTag.value,
-      rowMajorSegment: 'abc',
-      rowMinorSegment: 'abc',
-    });
-    expect(release.newReleaseTag.value).toBe('release-0.1.0');
-    expect(release.newReleaseBranch).toBe('release-0.1');
-    expect(release.newMainTag.value).toBe('master-0.2.0');
   });
 });

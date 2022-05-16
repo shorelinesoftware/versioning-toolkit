@@ -14167,7 +14167,15 @@ async function makePrerelease({ githubClient, pushTag, sha, tagPrefix, }) {
 ;// CONCATENATED MODULE: ./lib/actions/makeRelease.js
 
 function parseSegment(segment) {
-    return Number.parseInt(segment ?? '', 10) || undefined;
+    if (segment == null) {
+        return undefined;
+    }
+    return Number.parseInt(segment ?? '', 10);
+}
+function checkSegment(segment) {
+    if (Number.isNaN(segment)) {
+        throw new Error('Minor or major segment can not be parsed');
+    }
 }
 async function makeRelease({ releasePrefix, githubClient, rowMainTag, rowMajorSegment, rowMinorSegment, }) {
     if (!releasePrefix) {
@@ -14176,18 +14184,26 @@ async function makeRelease({ releasePrefix, githubClient, rowMainTag, rowMajorSe
     if (!rowMainTag) {
         throw new Error('missing rowMainTag');
     }
+    const minorSegment = parseSegment(rowMinorSegment);
+    checkSegment(minorSegment);
+    const majorSegment = parseSegment(rowMajorSegment);
+    checkSegment(majorSegment);
     const mainTag = await githubClient.getTag(rowMainTag);
     if (mainTag == null) {
         throw new Error(`Can not find tag ${rowMainTag} in repository`);
     }
     const { value: mainTagValue, sha } = mainTag;
-    const minorSegment = parseSegment(rowMinorSegment);
-    const majorSegment = parseSegment(rowMajorSegment);
+    let newMinorSegment = minorSegment ?? mainTagValue.minorSegment;
+    if (minorSegment == null &&
+        majorSegment != null &&
+        majorSegment > mainTagValue.majorSegment) {
+        newMinorSegment = 0;
+    }
     const newReleaseTag = new Tag({
         prefix: releasePrefix,
         version: {
             major: majorSegment ?? mainTagValue.majorSegment,
-            minor: minorSegment ?? mainTagValue.minorSegment,
+            minor: newMinorSegment,
             patch: 0,
         },
     });
@@ -14195,7 +14211,7 @@ async function makeRelease({ releasePrefix, githubClient, rowMainTag, rowMajorSe
         prefix: mainTagValue.prefix,
         version: {
             major: majorSegment ?? mainTagValue.majorSegment,
-            minor: (minorSegment ?? mainTagValue.minorSegment) + 1,
+            minor: newMinorSegment + 1,
             patch: 0,
         },
     });
