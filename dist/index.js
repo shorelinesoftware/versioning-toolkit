@@ -14172,10 +14172,10 @@ async function makePrerelease({ githubClient, pushTag, sha, tagPrefix, }) {
 ;// CONCATENATED MODULE: ./lib/actions/makeRelease.js
 
 function parseSegment(segment) {
-    if (segment == null) {
+    if (!segment) {
         return undefined;
     }
-    return Number.parseInt(segment ?? '', 10);
+    return Number.parseInt(segment, 10);
 }
 function checkSegment(segment) {
     if (Number.isNaN(segment)) {

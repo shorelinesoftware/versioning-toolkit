@@ -100,6 +100,8 @@ describe('make release', () => {
       githubClient: mockedGithubClient,
       rowMainTag: mainTag.value,
       push: true,
+      rowMinorSegment: '',
+      rowMajorSegment: '',
     });
     expect(release.newReleaseTag.value).toBe('release-0.1.0');
     expect(release.newReleaseBranch).toBe('release-0.1');

@@ -11,10 +11,10 @@ export type MakeReleaseParams = {
 };
 
 function parseSegment(segment: string | undefined) {
-  if (segment == null) {
+  if (!segment) {
     return undefined;
   }
-  return Number.parseInt(segment ?? '', 10);
+  return Number.parseInt(segment, 10);
 }
 
 function checkSegment(segment: number | undefined) {
