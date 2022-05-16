@@ -28,7 +28,7 @@ describe('makePrerelease', () => {
       githubClient: mockedGithubClient,
       tagPrefix: 'refs/heads/feature-1.0',
       sha,
-      push: true,
+      pushTag: true,
     });
     expect(mockedGithubClient.createTag).toHaveBeenCalledWith(newTag, sha);
   });
@@ -37,7 +37,7 @@ describe('makePrerelease', () => {
       githubClient: mockedGithubClient,
       tagPrefix: 'refs/heads/feature-1.0',
       sha,
-      push: false,
+      pushTag: false,
     });
     expect(mockedGithubClient.createTag).not.toBeCalled();
   });
@@ -69,7 +69,7 @@ describe('makePrerelease', () => {
         githubClient: mockedGithubClient,
         tagPrefix: prefix,
         sha,
-        push: false,
+        pushTag: false,
       });
       expect(tag.value).toBe(expected);
     },
@@ -80,7 +80,7 @@ describe('makePrerelease', () => {
         githubClient: mockedGithubClient,
         tagPrefix: '',
         sha,
-        push: false,
+        pushTag: false,
       }),
     ).rejects.toThrow('missing tagPrefix');
   });

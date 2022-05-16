@@ -13899,30 +13899,30 @@ async function runAction({ actions, actionAdapter, githubClient, }) {
         switch (actionName) {
             case 'autoIncrementPatch': {
                 const prefix = getInput(Inputs.prefix, { required: true });
-                const push = getInput(Inputs.push) === 'true';
+                const pushTag = getInput(Inputs.push) === 'true';
                 const newTag = await actions.autoIncrementPatch({
                     githubClient,
                     prefix,
-                    push,
+                    pushTag,
                     sha: actionAdapter.sha,
                 });
                 if (newTag == null) {
                     info(`can't make a new tag from ${prefix}`);
                     return;
                 }
-                processTag(newTag, push);
+                processTag(newTag, pushTag);
                 return;
             }
             case 'makePrerelease': {
                 const prefix = getInput(Inputs.prefix, { required: true });
-                const push = getInput(Inputs.push) === 'true';
+                const pushTag = getInput(Inputs.push) === 'true';
                 const newTag = await actions.makePrerelease({
                     githubClient,
                     tagPrefix: prefix,
                     sha: actionAdapter.sha,
-                    push,
+                    pushTag,
                 });
-                processTag(newTag, push);
+                processTag(newTag, pushTag);
                 return;
             }
             case 'makeRelease': {
@@ -13932,16 +13932,21 @@ async function runAction({ actions, actionAdapter, githubClient, }) {
                 const mainTag = getInput(Inputs.mainTag, { required: true });
                 const minorSegment = getInput(Inputs.minorSegment);
                 const majorSegment = getInput(Inputs.majorSegment);
+                const push = getInput(Inputs.push) === 'true';
                 const release = await actions.makeRelease({
                     releasePrefix,
                     githubClient,
                     rowMainTag: mainTag,
                     rowMajorSegment: majorSegment,
                     rowMinorSegment: minorSegment,
+                    push,
                 });
                 info(`new release tag ${release.newReleaseTag}`);
                 info(`new release branch ${release.newReleaseBranch}`);
                 info(`new main tag ${release.newMainTag}`);
+                if (push) {
+                    info(`changes pushed to repository`);
+                }
                 setOutput('NEW_RELEASE', {
                     newReleaseTag: release.newReleaseTag.value,
                     newMainTag: release.newMainTag.value,
@@ -14126,7 +14131,7 @@ class Tag {
 ;// CONCATENATED MODULE: ./lib/actions/autoIncrementPatch.js
 
 
-async function autoIncrementPatch({ prefix, githubClient, push, sha, }) {
+async function autoIncrementPatch({ prefix, githubClient, pushTag, sha, }) {
     const tags = await githubClient.listSemVerTags();
     const prefixOrBranch = getBranchName(prefix);
     const prevTag = Tag.getHighestTagOrDefaultWithPrefix(tags, prefixOrBranch);
@@ -14134,7 +14139,7 @@ async function autoIncrementPatch({ prefix, githubClient, push, sha, }) {
         return undefined;
     }
     const newTag = prevTag.bumpPatchSegment();
-    if (push) {
+    if (pushTag) {
         await githubClient.createTag(newTag, sha);
     }
     return newTag;
@@ -14143,7 +14148,7 @@ async function autoIncrementPatch({ prefix, githubClient, push, sha, }) {
 ;// CONCATENATED MODULE: ./lib/actions/makePrerelease.js
 
 
-async function makePrerelease({ githubClient, push, sha, tagPrefix, }) {
+async function makePrerelease({ githubClient, pushTag, sha, tagPrefix, }) {
     if (!tagPrefix) {
         throw new Error('missing tagPrefix');
     }
@@ -14158,7 +14163,7 @@ async function makePrerelease({ githubClient, push, sha, tagPrefix, }) {
         prefix: prevTag.prefix,
         version: `${prevTag.version}-${shortSha}`,
     });
-    if (push) {
+    if (pushTag) {
         await githubClient.createTag(newTag, sha);
     }
     return newTag;
@@ -14177,7 +14182,7 @@ function checkSegment(segment) {
         throw new Error('Minor or major segment can not be parsed');
     }
 }
-async function makeRelease({ releasePrefix, githubClient, rowMainTag, rowMajorSegment, rowMinorSegment, }) {
+async function makeRelease({ releasePrefix, githubClient, rowMainTag, rowMajorSegment, rowMinorSegment, push, }) {
     if (!releasePrefix) {
         throw new Error('missing releasePrefix');
     }
@@ -14216,9 +14221,11 @@ async function makeRelease({ releasePrefix, githubClient, rowMainTag, rowMajorSe
         },
     });
     const newReleaseBranch = newReleaseTag.createBranch();
-    await githubClient.createTag(newReleaseTag, sha);
-    await githubClient.createTag(newMainTag, sha);
-    await githubClient.createBranch(newReleaseBranch, sha);
+    if (push) {
+        await githubClient.createTag(newReleaseTag, sha);
+        await githubClient.createTag(newMainTag, sha);
+        await githubClient.createBranch(newReleaseBranch, sha);
+    }
     return {
         newReleaseTag,
         newMainTag,
