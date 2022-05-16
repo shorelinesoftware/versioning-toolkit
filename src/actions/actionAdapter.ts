@@ -6,6 +6,8 @@ import {
 } from '@actions/core';
 import { context } from '@actions/github';
 
+export { InputOptions } from '@actions/core';
+
 export type ActionAdapter = {
   getInput: typeof getInputFn;
   info: typeof infoFn;

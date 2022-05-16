@@ -1,7 +1,10 @@
 import { IGithubClient } from '../../github/GithubClient';
 import { GithubTag } from '../../github/types';
 import { Tag } from '../../models/Tag';
-import { Mocked } from '../../testUtils';
+import {
+  AssertToHaveBeenAnyNthCalledWithParams,
+  Mocked,
+} from '../../testUtils';
 import { makeRelease } from '../makeRelease';
 
 describe('make release', () => {
@@ -23,6 +26,7 @@ describe('make release', () => {
         releasePrefix: '',
         githubClient: mockedGithubClient,
         rowMainTag: 'stable-1.0.0',
+        push: true,
       }),
     ).rejects.toThrow('missing releasePrefix');
   });
@@ -32,6 +36,7 @@ describe('make release', () => {
         releasePrefix: 'stable',
         githubClient: mockedGithubClient,
         rowMainTag: '',
+        push: true,
       }),
     ).rejects.toThrow('missing rowMainTag');
   });
@@ -42,6 +47,7 @@ describe('make release', () => {
         releasePrefix: 'stable',
         githubClient: mockedGithubClient,
         rowMainTag,
+        push: true,
       }),
     ).rejects.toThrow(`Can not find tag ${rowMainTag} in repository`);
     rowMainTag = '123';
@@ -50,6 +56,7 @@ describe('make release', () => {
         releasePrefix: 'stable',
         githubClient: mockedGithubClient,
         rowMainTag,
+        push: true,
       }),
     ).rejects.toThrow(`Can not find tag ${rowMainTag} in repository`);
   });
@@ -67,6 +74,7 @@ describe('make release', () => {
         rowMainTag: mainTag.value,
         rowMajorSegment: 'abc',
         rowMinorSegment: '1',
+        push: true,
       }),
     ).rejects.toThrow('Minor or major segment can not be parsed');
     await expect(async () =>
@@ -76,6 +84,7 @@ describe('make release', () => {
         rowMainTag: mainTag.value,
         rowMajorSegment: '1',
         rowMinorSegment: 'abc',
+        push: true,
       }),
     ).rejects.toThrow('Minor or major segment can not be parsed');
   });
@@ -90,17 +99,18 @@ describe('make release', () => {
       releasePrefix: 'release',
       githubClient: mockedGithubClient,
       rowMainTag: mainTag.value,
+      push: true,
     });
     expect(release.newReleaseTag.value).toBe('release-0.1.0');
     expect(release.newReleaseBranch).toBe('release-0.1');
     expect(release.newMainTag.value).toBe('master-0.2.0');
-    expect(mockedGithubClient.createTag).toHaveBeenNthCalledWith(
-      1,
+    AssertToHaveBeenAnyNthCalledWithParams(
+      mockedGithubClient.createTag,
       release.newReleaseTag,
       sha,
     );
-    expect(mockedGithubClient.createTag).toHaveBeenNthCalledWith(
-      2,
+    AssertToHaveBeenAnyNthCalledWithParams(
+      mockedGithubClient.createTag,
       release.newMainTag,
       sha,
     );
@@ -108,6 +118,21 @@ describe('make release', () => {
       release.newReleaseBranch,
       sha,
     );
+  });
+  it('does not push changes if push is false', async () => {
+    const mainTag = new Tag('master-0.1.1');
+    mockedGithubClient.getTag.mockReturnValueOnce(
+      Promise.resolve({ value: mainTag, sha }),
+    );
+
+    await makeRelease({
+      releasePrefix: 'release',
+      githubClient: mockedGithubClient,
+      rowMainTag: mainTag.value,
+      push: false,
+    });
+    expect(mockedGithubClient.createTag).not.toHaveBeenCalled();
+    expect(mockedGithubClient.createBranch).not.toHaveBeenCalled();
   });
   it('creates release with the given major segment and zeroes patch and minor segments if major segment is new', async () => {
     const mainTag = new Tag('master-1.1.1');
@@ -120,6 +145,7 @@ describe('make release', () => {
       githubClient: mockedGithubClient,
       rowMainTag: mainTag.value,
       rowMajorSegment: '2',
+      push: true,
     });
     expect(release1.newReleaseTag.value).toBe('release-2.0.0');
     expect(release1.newReleaseBranch).toBe('release-2.0');
@@ -130,6 +156,7 @@ describe('make release', () => {
       githubClient: mockedGithubClient,
       rowMainTag: mainTag.value,
       rowMajorSegment: '1',
+      push: true,
     });
     expect(release2.newReleaseTag.value).toBe('release-1.1.0');
     expect(release2.newReleaseBranch).toBe('release-1.1');
@@ -146,6 +173,7 @@ describe('make release', () => {
       githubClient: mockedGithubClient,
       rowMainTag: mainTag.value,
       rowMinorSegment: '10',
+      push: true,
     });
     expect(release.newReleaseTag.value).toBe('release-0.10.0');
     expect(release.newReleaseBranch).toBe('release-0.10');
@@ -162,6 +190,7 @@ describe('make release', () => {
       rowMainTag: mainTag.value,
       rowMajorSegment: '10',
       rowMinorSegment: '10',
+      push: true,
     });
     expect(release.newReleaseTag.value).toBe('release-10.10.0');
     expect(release.newReleaseBranch).toBe('release-10.10');

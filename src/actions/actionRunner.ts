@@ -47,31 +47,31 @@ export async function runAction({
     switch (actionName) {
       case 'autoIncrementPatch': {
         const prefix = getInput(Inputs.prefix, { required: true });
-        const push = getInput(Inputs.push) === 'true';
+        const pushTag = getInput(Inputs.push) === 'true';
 
         const newTag = await actions.autoIncrementPatch({
           githubClient,
           prefix,
-          push,
+          pushTag,
           sha: actionAdapter.sha,
         });
         if (newTag == null) {
           info(`can't make a new tag from ${prefix}`);
           return;
         }
-        processTag(newTag, push);
+        processTag(newTag, pushTag);
         return;
       }
       case 'makePrerelease': {
         const prefix = getInput(Inputs.prefix, { required: true });
-        const push = getInput(Inputs.push) === 'true';
+        const pushTag = getInput(Inputs.push) === 'true';
         const newTag = await actions.makePrerelease({
           githubClient,
           tagPrefix: prefix,
           sha: actionAdapter.sha,
-          push,
+          pushTag,
         });
-        processTag(newTag, push);
+        processTag(newTag, pushTag);
         return;
       }
       case 'makeRelease': {
@@ -81,16 +81,21 @@ export async function runAction({
         const mainTag = getInput(Inputs.mainTag, { required: true });
         const minorSegment = getInput(Inputs.minorSegment);
         const majorSegment = getInput(Inputs.majorSegment);
+        const push = getInput(Inputs.push) === 'true';
         const release = await actions.makeRelease({
           releasePrefix,
           githubClient,
           rowMainTag: mainTag,
           rowMajorSegment: majorSegment,
           rowMinorSegment: minorSegment,
+          push,
         });
         info(`new release tag ${release.newReleaseTag}`);
         info(`new release branch ${release.newReleaseBranch}`);
         info(`new main tag ${release.newMainTag}`);
+        if (push) {
+          info(`changes pushed to repository`);
+        }
         setOutput('NEW_RELEASE', {
           newReleaseTag: release.newReleaseTag.value,
           newMainTag: release.newMainTag.value,

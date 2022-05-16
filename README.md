@@ -105,7 +105,7 @@ Creates release branch, updates main tag and pushes new release tag
 
 ### `push`
 
-**Optional**. Whether to push changes to git or not. Must be **'true' or 'false'**. 'false' by default
+**Optional**. Whether to push changes to repository or not. Must be **'true' or 'false'**. 'false' by default
 
 ### `majorSegment`
 

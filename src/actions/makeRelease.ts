@@ -7,6 +7,7 @@ export type MakeReleaseParams = {
   rowMinorSegment?: string;
   releasePrefix: string;
   rowMainTag: string;
+  push: boolean;
 };
 
 function parseSegment(segment: string | undefined) {
@@ -30,6 +31,7 @@ export async function makeRelease({
   rowMainTag,
   rowMajorSegment,
   rowMinorSegment,
+  push,
 }: MakeReleaseParams) {
   if (!releasePrefix) {
     throw new Error('missing releasePrefix');
@@ -80,10 +82,12 @@ export async function makeRelease({
   });
 
   const newReleaseBranch = newReleaseTag.createBranch();
+  if (push) {
+    await githubClient.createTag(newReleaseTag, sha);
+    await githubClient.createTag(newMainTag, sha);
+    await githubClient.createBranch(newReleaseBranch, sha);
+  }
 
-  await githubClient.createTag(newReleaseTag, sha);
-  await githubClient.createTag(newMainTag, sha);
-  await githubClient.createBranch(newReleaseBranch, sha);
   return {
     newReleaseTag,
     newMainTag,
