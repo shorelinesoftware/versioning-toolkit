@@ -47,31 +47,31 @@ export async function runAction({
     switch (actionName) {
       case 'autoIncrementPatch': {
         const prefix = getInput(Inputs.prefix, { required: true });
-        const pushTag = getInput(Inputs.pushTag) === 'true';
+        const push = getInput(Inputs.push) === 'true';
 
         const newTag = await actions.autoIncrementPatch({
           githubClient,
           prefix,
-          pushTag,
+          push,
           sha: actionAdapter.sha,
         });
         if (newTag == null) {
           info(`can't make a new tag from ${prefix}`);
           return;
         }
-        processTag(newTag, pushTag);
+        processTag(newTag, push);
         return;
       }
       case 'makePrerelease': {
         const prefix = getInput(Inputs.prefix, { required: true });
-        const pushTag = getInput(Inputs.pushTag) === 'true';
+        const push = getInput(Inputs.push) === 'true';
         const newTag = await actions.makePrerelease({
           githubClient,
           tagPrefix: prefix,
           sha: actionAdapter.sha,
-          pushTag,
+          push,
         });
-        processTag(newTag, pushTag);
+        processTag(newTag, push);
         return;
       }
       case 'makeRelease': {

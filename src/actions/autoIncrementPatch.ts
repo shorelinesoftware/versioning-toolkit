@@ -5,14 +5,14 @@ import { getBranchName } from '../utils';
 export type AutoIncrementPatchParams = {
   githubClient: IGithubClient;
   prefix: string;
-  pushTag: boolean;
+  push: boolean;
   sha: string;
 };
 
 export async function autoIncrementPatch({
   prefix,
   githubClient,
-  pushTag,
+  push,
   sha,
 }: AutoIncrementPatchParams) {
   const tags = await githubClient.listSemVerTags();
@@ -23,7 +23,7 @@ export async function autoIncrementPatch({
     return undefined;
   }
   const newTag = prevTag.bumpPatchSegment();
-  if (pushTag) {
+  if (push) {
     await githubClient.createTag(newTag, sha);
   }
   return newTag;

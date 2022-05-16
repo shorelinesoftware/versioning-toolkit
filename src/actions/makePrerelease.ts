@@ -6,12 +6,12 @@ export type MakePrereleaseParams = {
   githubClient: IGithubClient;
   tagPrefix: string;
   sha: string;
-  pushTag: boolean;
+  push: boolean;
 };
 
 export async function makePrerelease({
   githubClient,
-  pushTag,
+  push,
   sha,
   tagPrefix,
 }: MakePrereleaseParams) {
@@ -30,7 +30,7 @@ export async function makePrerelease({
     prefix: prevTag.prefix,
     version: `${prevTag.version}-${shortSha}`,
   });
-  if (pushTag) {
+  if (push) {
     await githubClient.createTag(newTag, sha);
   }
   return newTag;

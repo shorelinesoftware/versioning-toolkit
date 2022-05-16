@@ -26,7 +26,7 @@ If there are no tags that match the prefix the tag will be `{prefix}-0.0.1`
 
 **Required**. The name of the method. Must be **autoIncrementPatch**
 
-### `pushTag`
+### `push`
 
 **Optional**. Whether to push new tag or not. Must be **'true' or 'false'**. 'false' by default
 
@@ -39,7 +39,7 @@ env:
 with:
   prefix: 'master'
   actionName: 'autoIncrementPatch'
-  pushTag: 'true'
+  push: 'true'
   
 ```
 
@@ -64,7 +64,7 @@ Makes prerelease tag with the provided prefix. Uses short commit sha as prerelea
 
 **Required**. The prefix that will be used for tag. Can be branch name, PR#, tag or any other string value. First it tries to find tag by prefix with the highest version and use the version. Otherwise, default version is used: 0.0.1. e.g. if the prefix is `release` and there are tags: release-0.0.1, release-0.0.2 then the tag will be `release-0.0.2-{commit_sha}` if prefix is `foo` the tag will be `foo-0.0.1-{commit_sha}`.
 
-### `pushTag`
+### `push`
 
 **Optional**. Whether to push new tag or not. Must be **'true' or 'false'**. 'false' by default
 

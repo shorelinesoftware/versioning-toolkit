@@ -13865,7 +13865,7 @@ var Inputs;
 (function (Inputs) {
     Inputs["actionName"] = "actionName";
     Inputs["prefix"] = "prefix";
-    Inputs["pushTag"] = "pushTag";
+    Inputs["push"] = "push";
     Inputs["majorSegment"] = "majorSegment";
     Inputs["minorSegment"] = "minorSegment";
     Inputs["releasePrefix"] = "releasePrefix";
@@ -13899,30 +13899,30 @@ async function runAction({ actions, actionAdapter, githubClient, }) {
         switch (actionName) {
             case 'autoIncrementPatch': {
                 const prefix = getInput(Inputs.prefix, { required: true });
-                const pushTag = getInput(Inputs.pushTag) === 'true';
+                const push = getInput(Inputs.push) === 'true';
                 const newTag = await actions.autoIncrementPatch({
                     githubClient,
                     prefix,
-                    pushTag,
+                    push,
                     sha: actionAdapter.sha,
                 });
                 if (newTag == null) {
                     info(`can't make a new tag from ${prefix}`);
                     return;
                 }
-                processTag(newTag, pushTag);
+                processTag(newTag, push);
                 return;
             }
             case 'makePrerelease': {
                 const prefix = getInput(Inputs.prefix, { required: true });
-                const pushTag = getInput(Inputs.pushTag) === 'true';
+                const push = getInput(Inputs.push) === 'true';
                 const newTag = await actions.makePrerelease({
                     githubClient,
                     tagPrefix: prefix,
                     sha: actionAdapter.sha,
-                    pushTag,
+                    push,
                 });
-                processTag(newTag, pushTag);
+                processTag(newTag, push);
                 return;
             }
             case 'makeRelease': {
@@ -14126,7 +14126,7 @@ class Tag {
 ;// CONCATENATED MODULE: ./lib/actions/autoIncrementPatch.js
 
 
-async function autoIncrementPatch({ prefix, githubClient, pushTag, sha, }) {
+async function autoIncrementPatch({ prefix, githubClient, push, sha, }) {
     const tags = await githubClient.listSemVerTags();
     const prefixOrBranch = getBranchName(prefix);
     const prevTag = Tag.getHighestTagOrDefaultWithPrefix(tags, prefixOrBranch);
@@ -14134,7 +14134,7 @@ async function autoIncrementPatch({ prefix, githubClient, pushTag, sha, }) {
         return undefined;
     }
     const newTag = prevTag.bumpPatchSegment();
-    if (pushTag) {
+    if (push) {
         await githubClient.createTag(newTag, sha);
     }
     return newTag;
@@ -14143,7 +14143,7 @@ async function autoIncrementPatch({ prefix, githubClient, pushTag, sha, }) {
 ;// CONCATENATED MODULE: ./lib/actions/makePrerelease.js
 
 
-async function makePrerelease({ githubClient, pushTag, sha, tagPrefix, }) {
+async function makePrerelease({ githubClient, push, sha, tagPrefix, }) {
     if (!tagPrefix) {
         throw new Error('missing tagPrefix');
     }
@@ -14158,7 +14158,7 @@ async function makePrerelease({ githubClient, pushTag, sha, tagPrefix, }) {
         prefix: prevTag.prefix,
         version: `${prevTag.version}-${shortSha}`,
     });
-    if (pushTag) {
+    if (push) {
         await githubClient.createTag(newTag, sha);
     }
     return newTag;

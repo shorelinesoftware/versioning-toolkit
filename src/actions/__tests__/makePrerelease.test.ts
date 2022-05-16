@@ -23,21 +23,21 @@ describe('makePrerelease', () => {
     checkBranchExists: jest.fn<Promise<boolean>, [string]>(),
     getTag: jest.fn<Promise<GithubTag>, [string]>(),
   };
-  it('pushes new tag when pushTag is true', async () => {
+  it('pushes new tag when push is true', async () => {
     const newTag = await makePrerelease({
       githubClient: mockedGithubClient,
       tagPrefix: 'refs/heads/feature-1.0',
       sha,
-      pushTag: true,
+      push: true,
     });
     expect(mockedGithubClient.createTag).toHaveBeenCalledWith(newTag, sha);
   });
-  it('does not push new tag when pushTag is false', async () => {
+  it('does not push new tag when push is false', async () => {
     await makePrerelease({
       githubClient: mockedGithubClient,
       tagPrefix: 'refs/heads/feature-1.0',
       sha,
-      pushTag: false,
+      push: false,
     });
     expect(mockedGithubClient.createTag).not.toBeCalled();
   });
@@ -69,7 +69,7 @@ describe('makePrerelease', () => {
         githubClient: mockedGithubClient,
         tagPrefix: prefix,
         sha,
-        pushTag: false,
+        push: false,
       });
       expect(tag.value).toBe(expected);
     },
@@ -80,7 +80,7 @@ describe('makePrerelease', () => {
         githubClient: mockedGithubClient,
         tagPrefix: '',
         sha,
-        pushTag: false,
+        push: false,
       }),
     ).rejects.toThrow('missing tagPrefix');
   });

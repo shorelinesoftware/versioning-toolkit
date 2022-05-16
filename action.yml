@@ -11,8 +11,8 @@ inputs:
   prefix:
     description: 'prefix to filter tags'
     required: false
-  pushTag:
-    description: 'push tag or not'
+  push:
+    description: 'push changes to git or not'
     required: false
     default: 'false'
   releasePrefix:

@@ -60,7 +60,7 @@ describe('actionRunner', () => {
               return 'autoIncrementPatch';
             case Inputs.prefix:
               return 'master';
-            case Inputs.pushTag:
+            case Inputs.push:
               return 'true';
             default:
               throw new Error('Input not found');
@@ -101,7 +101,7 @@ describe('actionRunner', () => {
               return 'autoIncrementPatch';
             case Inputs.prefix:
               return prefix;
-            case Inputs.pushTag:
+            case Inputs.push:
               return 'false';
             default:
               throw new Error('Input not found');
@@ -122,7 +122,7 @@ describe('actionRunner', () => {
         expect(mockedActions.autoIncrementPatch).toHaveBeenCalledWith({
           githubClient: mockedGithubClient,
           prefix,
-          pushTag: false,
+          push: false,
           sha: mockedActionAdapter.sha,
         });
         expect(mockedActionAdapter.getInput).toHaveBeenNthCalledWith(
@@ -132,7 +132,7 @@ describe('actionRunner', () => {
         );
         expect(mockedActionAdapter.getInput).toHaveBeenNthCalledWith(
           3,
-          Inputs.pushTag,
+          Inputs.push,
         );
         assertSingleActionIsCalled('autoIncrementPatch');
       });
@@ -192,7 +192,7 @@ describe('actionRunner', () => {
               return 'autoIncrementPatch';
             case Inputs.prefix:
               return prefix;
-            case Inputs.pushTag:
+            case Inputs.push:
               return 'true';
             default:
               throw new Error('Input not found');
@@ -221,7 +221,7 @@ describe('actionRunner', () => {
               return 'makePrerelease';
             case Inputs.prefix:
               return branch;
-            case Inputs.pushTag:
+            case Inputs.push:
               return 'false';
             default:
               throw new Error('Input not found');
@@ -240,7 +240,7 @@ describe('actionRunner', () => {
           githubClient: mockedGithubClient,
           tagPrefix: 'master',
           sha: 'abc',
-          pushTag: false,
+          push: false,
         });
         expect(mockedActionAdapter.getInput).toHaveBeenNthCalledWith(
           2,
@@ -249,7 +249,7 @@ describe('actionRunner', () => {
         );
         expect(mockedActionAdapter.getInput).toHaveBeenNthCalledWith(
           3,
-          Inputs.pushTag,
+          Inputs.push,
         );
         assertSingleActionIsCalled('makePrerelease');
       });
@@ -284,7 +284,7 @@ describe('actionRunner', () => {
           switch (name as Inputs) {
             case Inputs.actionName:
               return 'makePrerelease';
-            case Inputs.pushTag:
+            case Inputs.push:
               return 'true';
             case Inputs.prefix:
               return branch;
@@ -319,7 +319,7 @@ describe('actionRunner', () => {
               return mainTag.value;
             case Inputs.releasePrefix:
               return releasePrefix;
-            case Inputs.pushTag:
+            case Inputs.push:
               return '';
             case Inputs.majorSegment:
               return majorSegment;

@@ -1,7 +1,7 @@
 export enum Inputs {
   actionName = 'actionName',
   prefix = 'prefix',
-  pushTag = 'pushTag',
+  push = 'push',
   majorSegment = 'majorSegment',
   minorSegment = 'minorSegment',
   releasePrefix = 'releasePrefix',

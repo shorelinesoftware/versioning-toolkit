@@ -38,7 +38,7 @@ describe('autoIncrementPatch', () => {
     const newTag = await autoIncrementPatch({
       githubClient: mockedGithubClient,
       prefix: 'refs/heads/master',
-      pushTag: false,
+      push: false,
       sha,
     });
     expect(newTag?.value).toBe('master-1.1.1');
@@ -48,7 +48,7 @@ describe('autoIncrementPatch', () => {
     const newTag = await autoIncrementPatch({
       githubClient: mockedGithubClient,
       prefix: '',
-      pushTag: false,
+      push: false,
       sha,
     });
     expect(newTag).toBe(undefined);
@@ -57,7 +57,7 @@ describe('autoIncrementPatch', () => {
     const newTag = await autoIncrementPatch({
       githubClient: mockedGithubClient,
       prefix: 'refs/heads/stable-2.3',
-      pushTag: false,
+      push: false,
       sha,
     });
     expect(newTag?.value).toBe('stable-2.3.2');
@@ -66,7 +66,7 @@ describe('autoIncrementPatch', () => {
     const newTag = await autoIncrementPatch({
       githubClient: mockedGithubClient,
       prefix: 'refs/heads/feature',
-      pushTag: false,
+      push: false,
       sha,
     });
     expect(newTag?.value).toBe('feature-0.0.1');
@@ -75,25 +75,25 @@ describe('autoIncrementPatch', () => {
     const newTag = await autoIncrementPatch({
       githubClient: mockedGithubClient,
       prefix: 'refs/heads/feature-1.0',
-      pushTag: false,
+      push: false,
       sha,
     });
     expect(newTag?.value).toBe('feature-1.0.1');
   });
-  it('pushes new tag when pushTag is true', async () => {
+  it('pushes new tag when push is true', async () => {
     const newTag = await autoIncrementPatch({
       githubClient: mockedGithubClient,
       prefix: 'refs/heads/feature-1.0',
-      pushTag: true,
+      push: true,
       sha,
     });
     expect(mockedGithubClient.createTag).toHaveBeenCalledWith(newTag, sha);
   });
-  it('does not push new tag when pushTag is false', async () => {
+  it('does not push new tag when push is false', async () => {
     await autoIncrementPatch({
       githubClient: mockedGithubClient,
       prefix: 'refs/heads/feature-1.0',
-      pushTag: false,
+      push: false,
       sha,
     });
     expect(mockedGithubClient.createTag).not.toBeCalled();
