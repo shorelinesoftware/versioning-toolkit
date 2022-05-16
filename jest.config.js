@@ -3,7 +3,7 @@ module.exports = {
   moduleFileExtensions: ['js', 'ts'],
   testMatch: ['**/+(*.)+(spec|test).+(ts|js)?(x)'],
   transform: {
-    '^.+\\.ts$': 'ts-jest'
+    '^.+\\.ts$': 'ts-jest',
   },
-  verbose: true
-}
+  verbose: true,
+};
