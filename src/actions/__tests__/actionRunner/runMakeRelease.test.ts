@@ -1,4 +1,5 @@
 import { Tag } from '../../../models/Tag';
+import { AssertToHaveBeenAnyNthCalledWithParams } from '../../../testUtils';
 import { Inputs } from '../../../types';
 import { runAction } from '../../actionRunner';
 import { MakeReleaseParams } from '../../makeRelease';
@@ -8,6 +9,32 @@ import {
   mockedActions,
   mockedGithubClient,
 } from './mocks';
+
+function assertOutputIsCorrect({
+  newReleaseTag,
+  newReleaseBranch,
+  newMainTag,
+}: {
+  newReleaseTag: Tag;
+  newMainTag: Tag;
+  newReleaseBranch: string;
+}) {
+  AssertToHaveBeenAnyNthCalledWithParams(
+    mockedActionAdapter.setOutput,
+    'NEW_RELEASE_TAG',
+    newReleaseTag.value,
+  );
+  AssertToHaveBeenAnyNthCalledWithParams(
+    mockedActionAdapter.setOutput,
+    'NEW_RELEASE_BRANCH',
+    newReleaseBranch,
+  );
+  AssertToHaveBeenAnyNthCalledWithParams(
+    mockedActionAdapter.setOutput,
+    'NEW_MAIN_TAG',
+    newMainTag.value,
+  );
+}
 
 describe('runs makeRelease', () => {
   const mainTag = new Tag('master-1.0.0');
@@ -87,11 +114,7 @@ describe('runs makeRelease', () => {
       3,
       `new main tag ${release.newMainTag}`,
     );
-    expect(mockedActionAdapter.setOutput).toHaveBeenCalledWith('NEW_RELEASE', {
-      newReleaseTag: release.newReleaseTag.value,
-      newMainTag: release.newMainTag.value,
-      newReleaseBranch: release.newReleaseBranch,
-    });
+    assertOutputIsCorrect(release);
   });
   it('and informs about if changes were pushed', async () => {
     mockedActions.makeRelease.mockReturnValueOnce(Promise.resolve(release));
@@ -134,10 +157,6 @@ describe('runs makeRelease', () => {
       4,
       `changes pushed to repository`,
     );
-    expect(mockedActionAdapter.setOutput).toHaveBeenCalledWith('NEW_RELEASE', {
-      newReleaseTag: release.newReleaseTag.value,
-      newMainTag: release.newMainTag.value,
-      newReleaseBranch: release.newReleaseBranch,
-    });
+    assertOutputIsCorrect(release);
   });
 });

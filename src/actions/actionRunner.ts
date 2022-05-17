@@ -96,11 +96,9 @@ export async function runAction({
         if (push) {
           info(`changes pushed to repository`);
         }
-        setOutput('NEW_RELEASE', {
-          newReleaseTag: release.newReleaseTag.value,
-          newMainTag: release.newMainTag.value,
-          newReleaseBranch: release.newReleaseBranch,
-        });
+        setOutput('NEW_RELEASE_TAG', release.newReleaseTag.value);
+        setOutput('NEW_RELEASE_BRANCH', release.newReleaseBranch);
+        setOutput('NEW_MAIN_TAG', release.newMainTag.value);
         return;
       }
       default: {
