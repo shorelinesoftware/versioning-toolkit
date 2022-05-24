@@ -12,6 +12,7 @@ export const mockedGithubClient: IGithubClient = {
   deleteBranch: jest.fn<Promise<boolean>, [string]>(),
   checkBranchExists: jest.fn<Promise<boolean>, [string]>(),
   getTag: jest.fn<Promise<GithubTag>, [string]>(),
+  compareTags: jest.fn(async () => Promise.resolve([])),
 };
 
 export const mockedActions: Mocked<Actions> = {

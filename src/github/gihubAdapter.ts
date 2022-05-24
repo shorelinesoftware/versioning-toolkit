@@ -44,5 +44,21 @@ export function getGithubAdapter(githubToken: string): GithubAdapter {
         })
         .then(() => undefined);
     },
+    compareRefs: async ({ baseRef, headRef, page, per_page }) => {
+      return await octokit.rest.repos
+        .compareCommits({
+          ...context.repo,
+          per_page,
+          page,
+          head: headRef,
+          base: baseRef,
+        })
+        .then((response) =>
+          response.data.commits.map((commit) => ({
+            sha: commit.sha,
+            message: commit.commit.message,
+          })),
+        );
+    },
   };
 }

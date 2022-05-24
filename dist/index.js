@@ -14285,6 +14285,20 @@ function getGithubAdapter(githubToken) {
             })
                 .then(() => undefined);
         },
+        compareRefs: async ({ baseRef, headRef, page, per_page }) => {
+            return await octokit.rest.repos
+                .compareCommits({
+                ...github.context.repo,
+                per_page,
+                page,
+                head: headRef,
+                base: baseRef,
+            })
+                .then((response) => response.data.commits.map((commit) => ({
+                sha: commit.sha,
+                message: commit.commit.message,
+            })));
+        },
     };
 }
 
@@ -14297,6 +14311,28 @@ function isNotFoundError(error) {
         typeof error.status === 'number' &&
         error.status === 404);
 }
+async function fetchPagesCore({ fetchedItems, fetchFn, initialPage, shouldFetchAll, }) {
+    const perPage = 100;
+    const response = await fetchFn({
+        per_page: perPage,
+        page: initialPage,
+    });
+    if (response.length < perPage || !shouldFetchAll) {
+        return [...fetchedItems, ...response];
+    }
+    return fetchPagesCore({
+        shouldFetchAll,
+        fetchedItems: [...fetchedItems, ...response],
+        fetchFn,
+        initialPage: initialPage + 1,
+    });
+}
+async function fetchPages(params) {
+    return fetchPagesCore({
+        ...params,
+        fetchedItems: [],
+    });
+}
 
 ;// CONCATENATED MODULE: ./lib/github/GithubClient.js
 
@@ -14307,7 +14343,27 @@ class GithubClient {
         this._githubAdapter = githubAdapter;
     }
     async listSemVerTags(shouldFetchAllTags = true, page = 1) {
-        return this._listSemVerTags(shouldFetchAllTags, [], page).then((tags) => tags ?? []);
+        return fetchPages({
+            shouldFetchAll: shouldFetchAllTags,
+            fetchFn: this._githubAdapter.listTags,
+            initialPage: page,
+        }).then((tags) => {
+            return tags
+                .map((tag) => Tag.parse(tag.name))
+                .filter((tag) => tag != null);
+        });
+    }
+    async compareTags(baseTag, headTag) {
+        return fetchPages({
+            shouldFetchAll: true,
+            fetchFn: async ({ per_page, page }) => this._githubAdapter.compareRefs({
+                per_page,
+                page,
+                headRef: headTag.value,
+                baseRef: baseTag.value,
+            }),
+            initialPage: 1,
+        });
     }
     async createBranch(branchName, sha) {
         await this._githubAdapter.createRef(`refs/heads/${branchName}`, sha);
@@ -14355,20 +14411,6 @@ class GithubClient {
             }
             throw error;
         });
-    }
-    async _listSemVerTags(shouldFetchAllTags = false, fetchedTags = [], page = 1) {
-        const perPage = 100;
-        const tagsResponse = await this._githubAdapter.listTags({
-            per_page: perPage,
-            page,
-        });
-        const tags = tagsResponse
-            .map((tag) => Tag.parse(tag.name))
-            .filter((tag) => tag != null);
-        if (tagsResponse.length < perPage || !shouldFetchAllTags) {
-            return [...fetchedTags, ...tags];
-        }
-        return this._listSemVerTags(shouldFetchAllTags, [...fetchedTags, ...tags], page + 1);
     }
 }
 

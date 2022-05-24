@@ -19,6 +19,7 @@ describe('make release', () => {
     deleteBranch: jest.fn<Promise<boolean>, [string]>(),
     checkBranchExists: jest.fn<Promise<boolean>, [string]>(),
     getTag: jest.fn<Promise<GithubTag>, [string]>(),
+    compareTags: jest.fn(async (_baseTag, _headTag) => Promise.resolve([])),
   };
   it('throws exception if release prefix is empty', async () => {
     await expect(async () =>

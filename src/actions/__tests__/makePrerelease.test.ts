@@ -22,6 +22,7 @@ describe('makePrerelease', () => {
     deleteBranch: jest.fn<Promise<boolean>, [string]>(),
     checkBranchExists: jest.fn<Promise<boolean>, [string]>(),
     getTag: jest.fn<Promise<GithubTag>, [string]>(),
+    compareTags: jest.fn(async (_baseTag, _headTag) => Promise.resolve([])),
   };
   it('pushes new tag when push is true', async () => {
     const newTag = await makePrerelease({
