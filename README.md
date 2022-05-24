@@ -118,17 +118,10 @@ Zeroes minor segment if provided without minor segment and its value is higher t
 
 ## Outputs
 
-`NEW_RELEASE`
+`NEW_RELEASE_TAG`  
+`NEW_MAIN_TAG`  
+`NEW_RELEASE_BRANCH`
 
-Outputs JSON of this form:
-
-```JSON
-{
-  "newReleaseTag": "release-1.0.0",
-  "newMainTag": "main-1.1.0",
-  "newReleaseBranch": "release-1.0"
-}
-```
 
 ## Usage:
 
