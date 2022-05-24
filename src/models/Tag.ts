@@ -125,17 +125,8 @@ export class Tag {
       tags.sort(tagComparer);
       return tags[0];
     }
-    if (typeof prefixOrTag === 'string') {
-      const parsedTag = Tag.parse(prefixOrTag);
-      if (parsedTag != null) {
-        return getHigestTagByTag(parsedTag);
-      }
-      return tags
-        .filter((tag) => tag.prefix === prefixOrTag)
-        .sort(tagComparer)[0];
-    }
 
-    function getHigestTagByTag(tag: Tag) {
+    function getHighestTagByTag(tag: Tag) {
       const maxVersion = new SemVer(tag.version).inc('minor');
       return tags
         .filter(
@@ -147,25 +138,34 @@ export class Tag {
         .sort(tagComparer)[0];
     }
 
-    return getHigestTagByTag(prefixOrTag);
+    if (typeof prefixOrTag === 'string') {
+      const parsedTag = Tag.parse(prefixOrTag);
+      if (parsedTag != null) {
+        return getHighestTagByTag(parsedTag);
+      }
+      return tags
+        .filter((tag) => tag.prefix === prefixOrTag)
+        .sort(tagComparer)[0];
+    }
+    return getHighestTagByTag(prefixOrTag);
   }
 
-  static getHighestTagOrDefaultWithPrefix(
+  static getHighestTagWithPrefixOrDefault(
     tags: Tag[],
     defaultPrefixOrTag?: never,
   ): Tag | undefined;
 
-  static getHighestTagOrDefaultWithPrefix(
+  static getHighestTagWithPrefixOrDefault(
     tags: Tag[],
     defaultPrefixOrTag: string | Tag,
   ): Tag;
 
-  static getHighestTagOrDefaultWithPrefix(
+  static getHighestTagWithPrefixOrDefault(
     tags: Tag[],
     defaultPrefixOrTag?: string | Tag,
   ) {
-    const prevTag = this.getHighestTag(tags, defaultPrefixOrTag);
-    if (prevTag == null) {
+    const highestTag = this.getHighestTag(tags, defaultPrefixOrTag);
+    if (highestTag == null) {
       if (typeof defaultPrefixOrTag == 'string') {
         const tag = Tag.parse(defaultPrefixOrTag);
         if (tag != null) {
@@ -178,7 +178,21 @@ export class Tag {
       }
       return defaultPrefixOrTag?.copy();
     }
-    return prevTag;
+    return highestTag;
+  }
+
+  static getPreviousTag(tags: Tag[], rawTag: string | Tag) {
+    const parsedTag = typeof rawTag === 'string' ? Tag.parse(rawTag) : rawTag;
+    if (parsedTag == null) {
+      return undefined;
+    }
+    return [...tags]
+      .sort(tagComparer)
+      .filter(
+        (tag) =>
+          tag.prefix === parsedTag.prefix &&
+          cmp(new SemVer(tag.version), '<', new SemVer(parsedTag.version)),
+      )[0];
   }
 
   static parse(tagOrBranch: string): Tag | undefined {

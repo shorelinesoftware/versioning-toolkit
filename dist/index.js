@@ -14062,16 +14062,7 @@ class Tag {
             tags.sort(tagComparer);
             return tags[0];
         }
-        if (typeof prefixOrTag === 'string') {
-            const parsedTag = Tag.parse(prefixOrTag);
-            if (parsedTag != null) {
-                return getHigestTagByTag(parsedTag);
-            }
-            return tags
-                .filter((tag) => tag.prefix === prefixOrTag)
-                .sort(tagComparer)[0];
-        }
-        function getHigestTagByTag(tag) {
+        function getHighestTagByTag(tag) {
             const maxVersion = new semver.SemVer(tag.version).inc('minor');
             return tags
                 .filter((currentTag) => currentTag.prefix === tag.prefix &&
@@ -14079,11 +14070,20 @@ class Tag {
                 (0,semver.cmp)(new semver.SemVer(currentTag.version), '>=', new semver.SemVer(tag.version)))
                 .sort(tagComparer)[0];
         }
-        return getHigestTagByTag(prefixOrTag);
+        if (typeof prefixOrTag === 'string') {
+            const parsedTag = Tag.parse(prefixOrTag);
+            if (parsedTag != null) {
+                return getHighestTagByTag(parsedTag);
+            }
+            return tags
+                .filter((tag) => tag.prefix === prefixOrTag)
+                .sort(tagComparer)[0];
+        }
+        return getHighestTagByTag(prefixOrTag);
     }
-    static getHighestTagOrDefaultWithPrefix(tags, defaultPrefixOrTag) {
-        const prevTag = this.getHighestTag(tags, defaultPrefixOrTag);
-        if (prevTag == null) {
+    static getHighestTagWithPrefixOrDefault(tags, defaultPrefixOrTag) {
+        const highestTag = this.getHighestTag(tags, defaultPrefixOrTag);
+        if (highestTag == null) {
             if (typeof defaultPrefixOrTag == 'string') {
                 const tag = Tag.parse(defaultPrefixOrTag);
                 if (tag != null) {
@@ -14096,7 +14096,17 @@ class Tag {
             }
             return defaultPrefixOrTag?.copy();
         }
-        return prevTag;
+        return highestTag;
+    }
+    static getPreviousTag(tags, rawTag) {
+        const parsedTag = typeof rawTag === 'string' ? Tag.parse(rawTag) : rawTag;
+        if (parsedTag == null) {
+            return undefined;
+        }
+        return [...tags]
+            .sort(tagComparer)
+            .filter((tag) => tag.prefix === parsedTag.prefix &&
+            (0,semver.cmp)(new semver.SemVer(tag.version), '<', new semver.SemVer(parsedTag.version)))[0];
     }
     static parse(tagOrBranch) {
         const versionStartRegexp = /-\d+\./;
@@ -14132,7 +14142,7 @@ class Tag {
 async function autoIncrementPatch({ prefix, githubClient, pushTag, sha, }) {
     const tags = await githubClient.listSemVerTags();
     const prefixOrBranch = getBranchName(prefix);
-    const prevTag = Tag.getHighestTagOrDefaultWithPrefix(tags, prefixOrBranch);
+    const prevTag = Tag.getHighestTagWithPrefixOrDefault(tags, prefixOrBranch);
     if (prevTag == null) {
         return undefined;
     }
@@ -14153,7 +14163,7 @@ async function makePrerelease({ githubClient, pushTag, sha, tagPrefix, }) {
     const tags = await githubClient.listSemVerTags();
     const branchNameOrPrefix = getBranchName(tagPrefix);
     const shortSha = sha.substring(0, 7);
-    let prevTag = Tag.getHighestTagOrDefaultWithPrefix(tags, branchNameOrPrefix);
+    let prevTag = Tag.getHighestTagWithPrefixOrDefault(tags, branchNameOrPrefix);
     if (prevTag?.isDefault()) {
         prevTag = prevTag.bumpPatchSegment();
     }

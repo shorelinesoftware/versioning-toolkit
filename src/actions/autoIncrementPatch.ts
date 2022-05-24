@@ -18,7 +18,7 @@ export async function autoIncrementPatch({
   const tags = await githubClient.listSemVerTags();
   const prefixOrBranch = getBranchName(prefix);
 
-  const prevTag = Tag.getHighestTagOrDefaultWithPrefix(tags, prefixOrBranch);
+  const prevTag = Tag.getHighestTagWithPrefixOrDefault(tags, prefixOrBranch);
   if (prevTag == null) {
     return undefined;
   }

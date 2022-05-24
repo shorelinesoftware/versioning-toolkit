@@ -21,7 +21,7 @@ export async function makePrerelease({
   const tags = await githubClient.listSemVerTags();
   const branchNameOrPrefix = getBranchName(tagPrefix);
   const shortSha = sha.substring(0, 7);
-  let prevTag = Tag.getHighestTagOrDefaultWithPrefix(tags, branchNameOrPrefix);
+  let prevTag = Tag.getHighestTagWithPrefixOrDefault(tags, branchNameOrPrefix);
 
   if (prevTag?.isDefault()) {
     prevTag = prevTag.bumpPatchSegment();
