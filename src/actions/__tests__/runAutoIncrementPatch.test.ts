@@ -1,6 +1,6 @@
-import { Tag } from '../../../models/Tag';
-import { Inputs } from '../../../types';
-import { runAction } from '../../actionRunner';
+import { Tag } from '../../models/Tag';
+import { Inputs } from '../../types';
+import { runAction } from '../actionRunner';
 import { assertGetInputIsCalled, assertSingleActionIsCalled } from './helpers';
 import {
   mockedActionAdapter,

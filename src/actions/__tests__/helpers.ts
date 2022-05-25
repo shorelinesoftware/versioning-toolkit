@@ -1,7 +1,7 @@
-import { AssertToHaveBeenAnyNthCalledWithParams } from '../../../testUtils';
-import { Inputs } from '../../../types';
-import { InputOptions } from '../../actionAdapter';
-import { Actions } from '../../actionRunner';
+import { AssertToHaveBeenAnyNthCalledWithParams } from '../../testUtils';
+import { Inputs } from '../../types';
+import { InputOptions } from '../actionAdapter';
+import { Actions } from '../actionRunner';
 import { mockedActionAdapter, mockedActions } from './mocks';
 
 export function assertSingleActionIsCalled(excludedActionName: keyof Actions) {

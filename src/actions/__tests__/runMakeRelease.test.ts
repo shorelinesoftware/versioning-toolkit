@@ -1,8 +1,8 @@
-import { Tag } from '../../../models/Tag';
-import { AssertToHaveBeenAnyNthCalledWithParams } from '../../../testUtils';
-import { Inputs } from '../../../types';
-import { runAction } from '../../actionRunner';
-import { MakeReleaseParams } from '../../makeRelease';
+import { Tag } from '../../models/Tag';
+import { MakeReleaseParams } from '../../services/makeRelease';
+import { AssertToHaveBeenAnyNthCalledWithParams } from '../../testUtils';
+import { Inputs } from '../../types';
+import { runAction } from '../actionRunner';
 import { assertGetInputIsCalled, assertSingleActionIsCalled } from './helpers';
 import {
   mockedActionAdapter,

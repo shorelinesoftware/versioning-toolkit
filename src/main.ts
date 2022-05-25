@@ -1,10 +1,10 @@
 import { getActionAdapter } from './actions/actionAdapter';
 import { runAction, Actions } from './actions/actionRunner';
-import { autoIncrementPatch } from './actions/autoIncrementPatch';
-import { makePrerelease } from './actions/makePrerelease';
-import { makeRelease } from './actions/makeRelease';
 import { getGithubAdapter } from './github/gihubAdapter';
 import { GithubClient } from './github/GithubClient';
+import { autoIncrementPatch } from './services/autoIncrementPatch';
+import { makePrerelease } from './services/makePrerelease';
+import { makeRelease } from './services/makeRelease';
 
 async function run() {
   const actionAdapter = getActionAdapter();

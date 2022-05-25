@@ -1,7 +1,7 @@
-import { Mocked } from '../../../testUtils';
-import { Inputs } from '../../../types';
-import { ActionAdapter } from '../../actionAdapter';
-import { Actions, runAction } from '../../actionRunner';
+import { Mocked } from '../../testUtils';
+import { Inputs } from '../../types';
+import { ActionAdapter } from '../actionAdapter';
+import { Actions, runAction } from '../actionRunner';
 import { mockedGithubClient } from './mocks';
 
 const mockedActions: Mocked<Actions> = {

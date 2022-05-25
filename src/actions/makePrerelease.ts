@@ -1,39 +1,29 @@
 import { IGithubClient } from '../github/GithubClient';
-import { Tag } from '../models/Tag';
-import { getBranchName } from '../utils';
+import { MakePrerelease } from '../services/makePrerelease';
+import { Inputs } from '../types';
+import { ActionAdapter } from './actionAdapter';
+import { processTag } from './utils';
 
 export type MakePrereleaseParams = {
   githubClient: IGithubClient;
-  tagPrefix: string;
-  sha: string;
-  pushTag: boolean;
+  actionAdapter: ActionAdapter;
+  makePrereleaseService: MakePrerelease;
 };
 
 export async function makePrerelease({
   githubClient,
-  pushTag,
-  sha,
-  tagPrefix,
+  actionAdapter,
+  makePrereleaseService,
 }: MakePrereleaseParams) {
-  if (!tagPrefix) {
-    throw new Error('missing tagPrefix');
-  }
-  const tags = await githubClient.listSemVerTags();
-  const branchNameOrPrefix = getBranchName(tagPrefix);
-  const shortSha = sha.substring(0, 7);
-  let prevTag = Tag.getHighestTagWithPrefixOrDefault(tags, branchNameOrPrefix);
-
-  if (prevTag?.isDefault()) {
-    prevTag = prevTag.bumpPatchSegment();
-  }
-  const newTag = new Tag({
-    prefix: prevTag.prefix,
-    version: `${prevTag.version}-${shortSha}`,
+  const { sha, getInput } = actionAdapter;
+  const prefix = getInput(Inputs.prefix, { required: true });
+  const pushTag = getInput(Inputs.push) === 'true';
+  const newTag = await makePrereleaseService({
+    githubClient,
+    tagPrefix: prefix,
+    sha,
+    pushTag,
   });
-  if (pushTag) {
-    await githubClient.createTag(newTag, sha);
-  }
-  return newTag;
+  processTag(newTag, pushTag, actionAdapter);
+  return;
 }
-
-export type MakePrerelease = typeof makePrerelease;

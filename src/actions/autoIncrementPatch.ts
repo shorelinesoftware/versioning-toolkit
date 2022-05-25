@@ -1,32 +1,35 @@
 import { IGithubClient } from '../github/GithubClient';
-import { Tag } from '../models/Tag';
-import { getBranchName } from '../utils';
+import { AutoIncrementPatch } from '../services/autoIncrementPatch';
+import { Inputs } from '../types';
+import { ActionAdapter } from './actionAdapter';
+import { processTag } from './utils';
 
 export type AutoIncrementPatchParams = {
   githubClient: IGithubClient;
-  prefix: string;
-  pushTag: boolean;
-  sha: string;
+  actionAdapter: ActionAdapter;
+  autoIncrementPatchService: AutoIncrementPatch;
 };
 
 export async function autoIncrementPatch({
-  prefix,
   githubClient,
-  pushTag,
-  sha,
+  actionAdapter,
+  autoIncrementPatchService,
 }: AutoIncrementPatchParams) {
-  const tags = await githubClient.listSemVerTags();
-  const prefixOrBranch = getBranchName(prefix);
+  const { info, getInput } = actionAdapter;
 
-  const prevTag = Tag.getHighestTagWithPrefixOrDefault(tags, prefixOrBranch);
-  if (prevTag == null) {
-    return undefined;
+  const prefix = getInput(Inputs.prefix, { required: true });
+  const pushTag = getInput(Inputs.push) === 'true';
+
+  const newTag = await autoIncrementPatchService({
+    githubClient,
+    prefix,
+    pushTag,
+    sha: actionAdapter.sha,
+  });
+  if (newTag == null) {
+    info(`can't make a new tag from ${prefix}`);
+    return;
   }
-  const newTag = prevTag.bumpPatchSegment();
-  if (pushTag) {
-    await githubClient.createTag(newTag, sha);
-  }
-  return newTag;
+  processTag(newTag, pushTag, actionAdapter);
+  return;
 }
-
-export type AutoIncrementPatch = typeof autoIncrementPatch;
