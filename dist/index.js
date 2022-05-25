@@ -13964,7 +13964,7 @@ async function makeRelease({ actionAdapter, githubClient, makeReleaseService, })
 
 
 
-async function runAction({ actions, actionAdapter, githubClient, }) {
+async function runAction({ serviceLocator, actionAdapter, githubClient, }) {
     const { setFailed, getInput } = actionAdapter;
     try {
         const actionName = getInput(Inputs.actionName, {
@@ -13975,21 +13975,21 @@ async function runAction({ actions, actionAdapter, githubClient, }) {
                 return await autoIncrementPatch({
                     githubClient,
                     actionAdapter,
-                    autoIncrementPatchService: actions.autoIncrementPatch,
+                    autoIncrementPatchService: serviceLocator.autoIncrementPatch,
                 });
             }
             case 'makePrerelease': {
                 return await makePrerelease({
                     githubClient,
                     actionAdapter,
-                    makePrereleaseService: actions.makePrerelease,
+                    makePrereleaseService: serviceLocator.makePrerelease,
                 });
             }
             case 'makeRelease': {
                 return await makeRelease({
                     actionAdapter,
                     githubClient,
-                    makeReleaseService: actions.makeRelease,
+                    makeReleaseService: serviceLocator.makeRelease,
                 });
             }
             default: {
@@ -14454,9 +14454,17 @@ async function makeRelease_makeRelease({ releasePrefix, githubClient, rowMainTag
     };
 }
 
+;// CONCATENATED MODULE: ./lib/services/serviceLocator.js
+
+
+
+const serviceLocator = {
+    autoIncrementPatch: autoIncrementPatch_autoIncrementPatch,
+    makePrerelease: makePrerelease_makePrerelease,
+    makeRelease: makeRelease_makeRelease,
+};
+
 ;// CONCATENATED MODULE: ./lib/main.js
-
-
 
 
 
@@ -14470,15 +14478,10 @@ async function run() {
             throw new Error('GITHUB_TOKEN is not provided');
         }
         const githubClient = new GithubClient(getGithubAdapter(githubToken));
-        const actionDictionary = {
-            autoIncrementPatch: autoIncrementPatch_autoIncrementPatch,
-            makePrerelease: makePrerelease_makePrerelease,
-            makeRelease: makeRelease_makeRelease,
-        };
         await runAction({
             githubClient,
             actionAdapter,
-            actions: actionDictionary,
+            serviceLocator: serviceLocator,
         });
     }
     catch (e) {

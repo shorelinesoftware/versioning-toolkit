@@ -1,10 +1,11 @@
+import { ServiceLocator } from '../../services/serviceLocator';
 import { Mocked } from '../../testUtils';
 import { Inputs } from '../../types';
 import { ActionAdapter } from '../actionAdapter';
-import { Actions, runAction } from '../actionRunner';
+import { runAction } from '../actionRunner';
 import { mockedGithubClient } from './mocks';
 
-const mockedActions: Mocked<Actions> = {
+const mockedServiceLocator: Mocked<ServiceLocator> = {
   autoIncrementPatch: jest.fn(),
   makePrerelease: jest.fn(),
   makeRelease: jest.fn(),
@@ -23,7 +24,7 @@ describe('run action', () => {
     await runAction({
       githubClient: mockedGithubClient,
       actionAdapter: mockedActionAdapter,
-      actions: mockedActions,
+      serviceLocator: mockedServiceLocator,
     });
     expect(mockedActionAdapter.getInput).toHaveBeenNthCalledWith(
       1,
@@ -47,13 +48,13 @@ describe('run action', () => {
         }
       });
 
-      mockedActions.autoIncrementPatch.mockImplementationOnce(() => {
+      mockedServiceLocator.autoIncrementPatch.mockImplementationOnce(() => {
         throw new Error('error');
       });
       await runAction({
         githubClient: mockedGithubClient,
         actionAdapter: mockedActionAdapter,
-        actions: mockedActions,
+        serviceLocator: mockedServiceLocator,
       });
       expect(mockedActionAdapter.setFailed).toHaveBeenCalledWith(
         new Error('error'),
@@ -65,7 +66,7 @@ describe('run action', () => {
       await runAction({
         githubClient: mockedGithubClient,
         actionAdapter: mockedActionAdapter,
-        actions: mockedActions,
+        serviceLocator: mockedServiceLocator,
       });
       expect(mockedActionAdapter.setFailed).toHaveBeenCalledWith(
         new Error(`${wrongActionName} should be unreachable`),

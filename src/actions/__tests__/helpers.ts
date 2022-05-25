@@ -1,12 +1,11 @@
 import { AssertToHaveBeenAnyNthCalledWithParams } from '../../testUtils';
-import { Inputs } from '../../types';
+import { ActionTypes, Inputs } from '../../types';
 import { InputOptions } from '../actionAdapter';
-import { Actions } from '../actionRunner';
-import { mockedActionAdapter, mockedActions } from './mocks';
+import { mockedActionAdapter, mockedServiceLocator } from './mocks';
 
-export function assertSingleActionIsCalled(excludedActionName: keyof Actions) {
+export function assertSingleActionIsCalled(excludedActionName: ActionTypes) {
   // eslint-disable-next-line github/array-foreach
-  Object.entries(mockedActions)
+  Object.entries(mockedServiceLocator)
     .filter(([key]) => key !== excludedActionName)
     .forEach(([, value]) => expect(value).not.toHaveBeenCalled());
 }

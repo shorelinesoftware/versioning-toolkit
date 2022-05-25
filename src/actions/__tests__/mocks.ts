@@ -1,9 +1,9 @@
 import { IGithubClient } from '../../github/GithubClient';
 import { GithubTag } from '../../github/types';
 import { Tag } from '../../models/Tag';
+import { ServiceLocator } from '../../services/serviceLocator';
 import { Mocked } from '../../testUtils';
 import { ActionAdapter } from '../actionAdapter';
-import { Actions } from '../actionRunner';
 
 export const mockedGithubClient: IGithubClient = {
   createTag: jest.fn<Promise<void>, [Tag]>(),
@@ -15,7 +15,7 @@ export const mockedGithubClient: IGithubClient = {
   compareTags: jest.fn(async () => Promise.resolve([])),
 };
 
-export const mockedActions: Mocked<Actions> = {
+export const mockedServiceLocator: Mocked<ServiceLocator> = {
   autoIncrementPatch: jest.fn(),
   makePrerelease: jest.fn(),
   makeRelease: jest.fn(),

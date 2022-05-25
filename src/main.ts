@@ -1,10 +1,8 @@
 import { getActionAdapter } from './actions/actionAdapter';
-import { runAction, Actions } from './actions/actionRunner';
+import { runAction } from './actions/actionRunner';
 import { getGithubAdapter } from './github/gihubAdapter';
 import { GithubClient } from './github/GithubClient';
-import { autoIncrementPatch } from './services/autoIncrementPatch';
-import { makePrerelease } from './services/makePrerelease';
-import { makeRelease } from './services/makeRelease';
+import { serviceLocator } from './services/serviceLocator';
 
 async function run() {
   const actionAdapter = getActionAdapter();
@@ -15,16 +13,10 @@ async function run() {
     }
     const githubClient = new GithubClient(getGithubAdapter(githubToken));
 
-    const actionDictionary: Actions = {
-      autoIncrementPatch,
-      makePrerelease,
-      makeRelease,
-    };
-
     await runAction({
       githubClient,
       actionAdapter,
-      actions: actionDictionary,
+      serviceLocator,
     });
   } catch (e) {
     if (e instanceof Error) {

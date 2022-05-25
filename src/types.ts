@@ -8,7 +8,7 @@ export enum Inputs {
   mainTag = 'mainTag',
 }
 
-export type ActionName =
+export type ActionTypes =
   | 'autoIncrementPatch'
   | 'makePrerelease'
   | 'makeRelease';

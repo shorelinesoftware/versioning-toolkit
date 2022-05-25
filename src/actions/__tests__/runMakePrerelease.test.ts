@@ -4,7 +4,7 @@ import { runAction } from '../actionRunner';
 import { assertGetInputIsCalled, assertSingleActionIsCalled } from './helpers';
 import {
   mockedActionAdapter,
-  mockedActions,
+  mockedServiceLocator,
   mockedGithubClient,
 } from './mocks';
 
@@ -27,13 +27,15 @@ describe('runs makePrerelease', () => {
   });
 
   it('when action name is makePrerelease', async () => {
-    mockedActions.makePrerelease.mockReturnValueOnce(Promise.resolve(tag));
+    mockedServiceLocator.makePrerelease.mockReturnValueOnce(
+      Promise.resolve(tag),
+    );
     await runAction({
       githubClient: mockedGithubClient,
       actionAdapter: mockedActionAdapter,
-      actions: mockedActions,
+      serviceLocator: mockedServiceLocator,
     });
-    expect(mockedActions.makePrerelease).toHaveBeenCalledWith({
+    expect(mockedServiceLocator.makePrerelease).toHaveBeenCalledWith({
       githubClient: mockedGithubClient,
       tagPrefix: 'master',
       sha: 'abc',
@@ -44,12 +46,14 @@ describe('runs makePrerelease', () => {
     assertSingleActionIsCalled('makePrerelease');
   });
   it('and sets output when tag is returned', async () => {
-    mockedActions.makePrerelease.mockReturnValueOnce(Promise.resolve(tag));
+    mockedServiceLocator.makePrerelease.mockReturnValueOnce(
+      Promise.resolve(tag),
+    );
 
     await runAction({
       githubClient: mockedGithubClient,
       actionAdapter: mockedActionAdapter,
-      actions: mockedActions,
+      serviceLocator: mockedServiceLocator,
     });
     expect(mockedActionAdapter.setOutput).toHaveBeenCalledWith(
       'NEW_TAG',
@@ -57,16 +61,20 @@ describe('runs makePrerelease', () => {
     );
   });
   it('and informs about new tag', async () => {
-    mockedActions.makePrerelease.mockReturnValueOnce(Promise.resolve(tag));
+    mockedServiceLocator.makePrerelease.mockReturnValueOnce(
+      Promise.resolve(tag),
+    );
     await runAction({
       githubClient: mockedGithubClient,
       actionAdapter: mockedActionAdapter,
-      actions: mockedActions,
+      serviceLocator: mockedServiceLocator,
     });
     expect(mockedActionAdapter.info).toHaveBeenCalledWith(`new tag: ${tag}`);
   });
   it('and informs if new tag was pushed', async () => {
-    mockedActions.makePrerelease.mockReturnValueOnce(Promise.resolve(tag));
+    mockedServiceLocator.makePrerelease.mockReturnValueOnce(
+      Promise.resolve(tag),
+    );
 
     mockedActionAdapter.getInput.mockImplementation((name) => {
       switch (name as Inputs) {
@@ -84,7 +92,7 @@ describe('runs makePrerelease', () => {
     await runAction({
       githubClient: mockedGithubClient,
       actionAdapter: mockedActionAdapter,
-      actions: mockedActions,
+      serviceLocator: mockedServiceLocator,
     });
     expect(mockedActionAdapter.info).toHaveBeenNthCalledWith(
       2,

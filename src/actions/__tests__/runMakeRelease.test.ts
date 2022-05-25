@@ -6,7 +6,7 @@ import { runAction } from '../actionRunner';
 import { assertGetInputIsCalled, assertSingleActionIsCalled } from './helpers';
 import {
   mockedActionAdapter,
-  mockedActions,
+  mockedServiceLocator,
   mockedGithubClient,
 } from './mocks';
 
@@ -68,11 +68,13 @@ describe('runs makeRelease', () => {
   };
 
   it('when action name is makeRelease', async () => {
-    mockedActions.makeRelease.mockReturnValueOnce(Promise.resolve(release));
+    mockedServiceLocator.makeRelease.mockReturnValueOnce(
+      Promise.resolve(release),
+    );
     await runAction({
       githubClient: mockedGithubClient,
       actionAdapter: mockedActionAdapter,
-      actions: mockedActions,
+      serviceLocator: mockedServiceLocator,
     });
 
     const params: MakeReleaseParams = {
@@ -84,7 +86,7 @@ describe('runs makeRelease', () => {
       push: false,
     };
 
-    expect(mockedActions.makeRelease).toHaveBeenCalledWith(params);
+    expect(mockedServiceLocator.makeRelease).toHaveBeenCalledWith(params);
     assertGetInputIsCalled(Inputs.releasePrefix, {
       required: true,
     });
@@ -96,11 +98,13 @@ describe('runs makeRelease', () => {
     assertSingleActionIsCalled('makeRelease');
   });
   it('and informs about new release and outputs result', async () => {
-    mockedActions.makeRelease.mockReturnValueOnce(Promise.resolve(release));
+    mockedServiceLocator.makeRelease.mockReturnValueOnce(
+      Promise.resolve(release),
+    );
     await runAction({
       githubClient: mockedGithubClient,
       actionAdapter: mockedActionAdapter,
-      actions: mockedActions,
+      serviceLocator: mockedServiceLocator,
     });
     expect(mockedActionAdapter.info).toHaveBeenNthCalledWith(
       1,
@@ -117,7 +121,9 @@ describe('runs makeRelease', () => {
     assertOutputIsCorrect(release);
   });
   it('and informs about if changes were pushed', async () => {
-    mockedActions.makeRelease.mockReturnValueOnce(Promise.resolve(release));
+    mockedServiceLocator.makeRelease.mockReturnValueOnce(
+      Promise.resolve(release),
+    );
     mockedActionAdapter.getInput.mockImplementation((name) => {
       switch (name as Inputs) {
         case Inputs.actionName:
@@ -139,7 +145,7 @@ describe('runs makeRelease', () => {
     await runAction({
       githubClient: mockedGithubClient,
       actionAdapter: mockedActionAdapter,
-      actions: mockedActions,
+      serviceLocator: mockedServiceLocator,
     });
     expect(mockedActionAdapter.info).toHaveBeenNthCalledWith(
       1,
