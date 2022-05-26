@@ -1,10 +1,18 @@
 import { IGithubClient } from '../../github/GithubClient';
 import { GithubTag } from '../../github/types';
-import { CustomField, IJiraClient, Issue } from '../../jira/types';
+import {
+  CustomField,
+  IJiraClient,
+  Issue,
+  IssueFieldUpdates,
+} from '../../jira/types';
 import { Tag } from '../../models/Tag';
 import { Mocked } from '../../testUtils';
 import { ChangelogItem } from '../../types';
-import { generateChangelog, JIRA_KEY_REGEXP } from '../generateChangelog';
+import {
+  generateChangelogBuilder,
+  JIRA_KEY_REGEXP,
+} from '../generateChangelog';
 
 function changelogSortingPredicate(a: ChangelogItem, b: ChangelogItem) {
   return a.summary.localeCompare(b.summary);
@@ -142,18 +150,18 @@ describe('generateChangelog', () => {
       Promise.resolve(commits),
     ),
   };
-
+  const issueType = 'bug';
   const mockedJiraClient: Mocked<IJiraClient> = {
     getIssuesByKeys: jest.fn(async (_keys) =>
       Promise.resolve<Issue[]>(
         jiraKeys.map((key, index) => {
           return {
-            id: index.toString(),
+            id: index,
             key,
             fields: {
               issueType: {
-                id: index.toString(),
-                name: '',
+                id: index,
+                name: issueType,
               },
               summary: `${key}-${index}`,
             },
@@ -162,9 +170,12 @@ describe('generateChangelog', () => {
       ),
     ),
     getCustomField: jest.fn<Promise<CustomField | undefined>, [string]>(),
-    updateIssue: jest.fn<Promise<void>, [Issue]>(),
+    updateIssue: jest.fn<Promise<void>, [IssueFieldUpdates, string]>(),
   };
-
+  const generateChangelog = generateChangelogBuilder(
+    mockedGithubClient,
+    mockedJiraClient,
+  );
   it('generates changelog without duplicated issues', async () => {
     const expectedChangeLog: ChangelogItem[] = [
       ...jiraKeys.map((key, index) => {
@@ -172,24 +183,25 @@ describe('generateChangelog', () => {
           summary: `${key}-${index}`,
           issueKey: key,
           existsInJira: true,
+          type: issueType,
         };
       }),
       ...notMatchableJiraKeys.map((key) => {
         return {
-          existsInJira: false,
+          existsInJira: false as const,
           issueKey: undefined,
           summary: key,
+          type: 'unknown' as const,
         };
       }),
       {
-        existsInJira: false,
+        existsInJira: false as const,
         issueKey: undefined,
         summary: 'unknown',
+        type: 'unknown' as const,
       },
     ];
     const changelog = await generateChangelog({
-      jiraClient: mockedJiraClient,
-      githubClient: mockedGithubClient,
       rawHeadTag: headTag.value,
     });
     expect(mockedGithubClient.compareTags).toHaveBeenCalledWith(
@@ -215,8 +227,6 @@ describe('generateChangelog', () => {
       Promise.resolve([commit1, commit2]),
     );
     const changelog = await generateChangelog({
-      jiraClient: mockedJiraClient,
-      githubClient: mockedGithubClient,
       rawHeadTag: headTag.value,
     });
     const expectedChangeLog: ChangelogItem[] = [
@@ -224,36 +234,38 @@ describe('generateChangelog', () => {
         existsInJira: false,
         issueKey: undefined,
         summary: commit1.message,
+        type: 'unknown',
       },
       {
         existsInJira: false,
         issueKey: undefined,
         summary: commit2.message,
+        type: 'unknown',
       },
     ];
     expect(expectedChangeLog.sort(changelogSortingPredicate)).toEqual(
       changelog.sort(changelogSortingPredicate),
     );
   });
-  it('sets existsInJira true for each changelog item if key exists in JIRA', async () => {
+  it('sets existsInJira true and type for each changelog item if key exists in JIRA', async () => {
     const issue1 = {
-      id: '1',
+      id: 1,
       key: 'FOO-1',
       fields: {
         issueType: {
-          id: '1',
-          name: '1',
+          id: 1,
+          name: issueType,
         },
         summary: 'sum1',
       },
     };
     const issue2 = {
-      id: '2',
+      id: 2,
       key: 'FOO-2',
       fields: {
         issueType: {
-          id: '2',
-          name: '2',
+          id: 2,
+          name: issueType,
         },
         summary: 'sum2',
       },
@@ -273,8 +285,6 @@ describe('generateChangelog', () => {
       Promise.resolve([commit1, commit2]),
     );
     const changelog = await generateChangelog({
-      jiraClient: mockedJiraClient,
-      githubClient: mockedGithubClient,
       rawHeadTag: headTag.value,
     });
     const expectedChangeLog: ChangelogItem[] = [
@@ -282,11 +292,13 @@ describe('generateChangelog', () => {
         existsInJira: true,
         issueKey: issue1.key,
         summary: issue1.fields.summary,
+        type: issueType,
       },
       {
         existsInJira: true,
         issueKey: issue2.key,
         summary: issue2.fields.summary,
+        type: issueType,
       },
     ];
     expect(expectedChangeLog.sort(changelogSortingPredicate)).toEqual(
@@ -297,8 +309,6 @@ describe('generateChangelog', () => {
   it('throws error if tag can not be parsed', async () => {
     await expect(async () =>
       generateChangelog({
-        jiraClient: mockedJiraClient,
-        githubClient: mockedGithubClient,
         rawHeadTag: '123',
       }),
     ).rejects.toThrow();

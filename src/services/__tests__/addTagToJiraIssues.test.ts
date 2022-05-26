@@ -1,0 +1,190 @@
+import {
+  CustomField,
+  IJiraClient,
+  Issue,
+  IssueFieldUpdates,
+} from '../../jira/types';
+import { Mocked } from '../../testUtils';
+import { ChangelogItem } from '../../types';
+import { addTagToJiraIssuesBuilder } from '../addTagToJiraIssue';
+import { GenerateChangelog } from '../generateChangelog';
+
+describe('addTagToJiraIssues', () => {
+  const tag = 'main-1.0.0';
+  const tagFieldName = 'tag';
+  const tags = ['tag1', 'tag2'];
+  const issue1: Issue = {
+    id: 1,
+    key: 'FOO-1',
+    fields: {
+      issueType: {
+        id: 1,
+        name: '1',
+      },
+      summary: '1',
+      [tagFieldName]: tags,
+    },
+  };
+  const issue2: Issue = {
+    id: 2,
+    key: 'FOO-2',
+    fields: {
+      issueType: {
+        id: 2,
+        name: '2',
+      },
+      summary: '2',
+      [tagFieldName]: tags,
+    },
+  };
+  const changelog1: ChangelogItem = {
+    existsInJira: true,
+    issueKey: issue1.key,
+    summary: issue1.fields.summary,
+    type: '1',
+  };
+  const changelog2: ChangelogItem = {
+    existsInJira: true,
+    issueKey: issue2.key,
+    summary: issue2.fields.summary,
+    type: '2',
+  };
+  const changelog3: ChangelogItem = {
+    existsInJira: false,
+    issueKey: undefined,
+    summary: '123',
+    type: 'unknown',
+  };
+  const customField: CustomField = {
+    id: 1,
+    name: tagFieldName,
+  };
+  const issuesKeys = [issue1.key, issue2.key];
+  const mockedJiraClient: Mocked<IJiraClient> = {
+    getIssuesByKeys: jest.fn(async (_keys) =>
+      Promise.resolve<Issue[]>([issue1, issue2]),
+    ),
+    getCustomField: jest.fn<Promise<CustomField | undefined>, [string]>(
+      async () => Promise.resolve(customField),
+    ),
+    updateIssue: jest.fn<Promise<void>, [IssueFieldUpdates, string]>(async () =>
+      Promise.resolve(),
+    ),
+  };
+
+  const generateChangelog: GenerateChangelog = async () =>
+    Promise.resolve([changelog1, changelog2, changelog3]);
+  const addTagToJiraIssues = addTagToJiraIssuesBuilder(
+    generateChangelog,
+    mockedJiraClient,
+  );
+  it('adds tag to all existed issues', async () => {
+    const expectedUpdatedIssuesKeys = [issue1.key, issue2.key];
+    const updatedIssuesKeys = await addTagToJiraIssues({
+      issuesKeys,
+      tagFieldName,
+      rawTag: tag,
+    });
+    expect(updatedIssuesKeys).toEqual(expectedUpdatedIssuesKeys);
+  });
+
+  it('sends request to get issues only for existed issues', async () => {
+    await addTagToJiraIssues({
+      issuesKeys,
+      tagFieldName,
+      rawTag: tag,
+    });
+    expect(mockedJiraClient.getIssuesByKeys).toHaveBeenCalledWith([
+      issue1.key,
+      issue2.key,
+    ]);
+  });
+
+  it('skips issues which does not have tag field', async () => {
+    mockedJiraClient.getIssuesByKeys.mockReturnValueOnce(
+      Promise.resolve([
+        issue1,
+        {
+          ...issue2,
+          fields: {
+            issueType: {
+              id: 2,
+              name: '2',
+            },
+            summary: '2',
+          },
+        },
+      ]),
+    );
+    const result = await addTagToJiraIssues({
+      issuesKeys,
+      tagFieldName,
+      rawTag: tag,
+    });
+    expect(result).toEqual([issue1.key]);
+  });
+
+  it('appends existed tags when updates issue', async () => {
+    mockedJiraClient.updateIssue.mockImplementationOnce(async (updates) => {
+      expect(updates.fields[tagFieldName]).toEqual([...tags, tag]);
+      return Promise.resolve();
+    });
+    await addTagToJiraIssues({
+      issuesKeys,
+      tagFieldName,
+      rawTag: tag,
+    });
+  });
+  it('returns empty array if tagField can not be found', async () => {
+    mockedJiraClient.getCustomField.mockReturnValueOnce(
+      Promise.resolve(undefined),
+    );
+    const result = await addTagToJiraIssues({
+      issuesKeys,
+      tagFieldName,
+      rawTag: tag,
+    });
+    expect(result).toEqual([]);
+  });
+  it('returns empty array if no issues are updated', async () => {
+    mockedJiraClient.getIssuesByKeys.mockReturnValueOnce(Promise.resolve([]));
+
+    const result = await addTagToJiraIssues({
+      issuesKeys,
+      tagFieldName,
+      rawTag: tag,
+    });
+    expect(result).toEqual([]);
+  });
+  it('returns not empty array if some issues are updated', async () => {
+    mockedJiraClient.getIssuesByKeys.mockReturnValueOnce(
+      Promise.resolve([issue1]),
+    );
+
+    const result = await addTagToJiraIssues({
+      issuesKeys,
+      tagFieldName,
+      rawTag: tag,
+    });
+    expect(result).toEqual([issue1.key]);
+  });
+  it('does not throw exception if issue can not be updated', async () => {
+    mockedJiraClient.updateIssue.mockRejectedValueOnce(new Error());
+
+    const result = await addTagToJiraIssues({
+      issuesKeys,
+      tagFieldName,
+      rawTag: tag,
+    });
+    expect(result).toEqual([issue2.key]);
+  });
+  it('throws exception if raw tag can not be parsed', async () => {
+    await expect(async () =>
+      addTagToJiraIssues({
+        issuesKeys,
+        tagFieldName,
+        rawTag: '123',
+      }),
+    ).rejects.toThrow();
+  });
+});

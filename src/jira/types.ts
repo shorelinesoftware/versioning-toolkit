@@ -1,20 +1,34 @@
 export interface IJiraClient {
   getIssuesByKeys: (keys: string[]) => Promise<Issue[]>;
   getCustomField: (fieldName: string) => Promise<CustomField | undefined>;
-  updateIssue: (updatedIssue: Issue) => Promise<void>;
+  updateIssue: (
+    updatedIssue: IssueFieldUpdates,
+    issueKey: string,
+  ) => Promise<void>;
 }
 
 export type CustomField = {
-  id: string;
+  id: number;
   name: string;
 };
 
+export type IssueFieldUpdates = {
+  fields: {
+    [customField: string]: unknown;
+  };
+};
+
+export type JiraUser = {
+  email: string;
+  token: string;
+};
+
 export type Issue = {
-  id: string;
+  id: number;
   key: string;
   fields: {
     issueType: {
-      id: string;
+      id: number;
       name: string;
     };
     summary: string;
