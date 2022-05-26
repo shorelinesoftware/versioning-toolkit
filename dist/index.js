@@ -13879,6 +13879,9 @@ function getBranchName(branch) {
 function assertUnreachable(value) {
     throw new Error(`${value} should be unreachable`);
 }
+function unique(array) {
+    return [...new Set(array)];
+}
 
 ;// CONCATENATED MODULE: ./lib/actions/utils.js
 function processTag(newTag, isTagPushed, actionAdapter) {
@@ -14199,15 +14202,11 @@ class Tag {
         }
         return highestTag;
     }
-    static getPreviousTag(tags, rawTag) {
-        const parsedTag = typeof rawTag === 'string' ? Tag.parse(rawTag) : rawTag;
-        if (parsedTag == null) {
-            return undefined;
-        }
+    static getPreviousTag(tags, currentTag) {
         return [...tags]
             .sort(tagComparer)
-            .filter((tag) => tag.prefix === parsedTag.prefix &&
-            (0,semver.cmp)(new semver.SemVer(tag.version), '<', new semver.SemVer(parsedTag.version)))[0];
+            .filter((tag) => tag.prefix === currentTag.prefix &&
+            (0,semver.cmp)(new semver.SemVer(tag.version), '<', new semver.SemVer(currentTag.version)))[0];
     }
     static parse(tagOrBranch) {
         const versionStartRegexp = /-\d+\./;

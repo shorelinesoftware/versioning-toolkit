@@ -19,3 +19,14 @@ export type Equals<X, Y> = (<T>() => T extends X ? 1 : 2) extends <
 >() => T extends Y ? 1 : 2
   ? true
   : false;
+
+export type JiraUser = {
+  email: string;
+  token: string;
+};
+
+export type ChangelogItem = {
+  issueKey: string | undefined;
+  existsInJira: boolean;
+  summary: string;
+};

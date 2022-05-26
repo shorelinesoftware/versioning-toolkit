@@ -290,21 +290,18 @@ describe('Tag', () => {
   });
 
   describe('getPreviousTag', () => {
-    it('returns undefined if can not parse tag', () => {
-      expect(Tag.getPreviousTag(tags, 'abc')).toBe(undefined);
-    });
     it('returns tag with patch -1', () => {
-      expect(Tag.getPreviousTag(tags, 'stable-2.3.1')?.value).toBe(
+      expect(Tag.getPreviousTag(tags, new Tag('stable-2.3.1'))?.value).toBe(
         'stable-2.3.0',
       );
     });
     it('returns tag with minor - 1', () => {
-      expect(Tag.getPreviousTag(tags, 'stable-2.2.0')?.value).toBe(
+      expect(Tag.getPreviousTag(tags, new Tag('stable-2.2.0'))?.value).toBe(
         'stable-2.1.0',
       );
     });
     it('returns tag with major - 1', () => {
-      expect(Tag.getPreviousTag(tags, 'stable-2.0.0')?.value).toBe(
+      expect(Tag.getPreviousTag(tags, new Tag('stable-2.0.0'))?.value).toBe(
         'stable-1.0.0',
       );
     });

@@ -5,3 +5,7 @@ export function getBranchName(branch: string) {
 export function assertUnreachable(value: never): never {
   throw new Error(`${value} should be unreachable`);
 }
+
+export function unique<T>(array: T[]): T[] {
+  return [...new Set(array)];
+}

@@ -181,17 +181,13 @@ export class Tag {
     return highestTag;
   }
 
-  static getPreviousTag(tags: Tag[], rawTag: string | Tag) {
-    const parsedTag = typeof rawTag === 'string' ? Tag.parse(rawTag) : rawTag;
-    if (parsedTag == null) {
-      return undefined;
-    }
+  static getPreviousTag(tags: Tag[], currentTag: Tag) {
     return [...tags]
       .sort(tagComparer)
       .filter(
         (tag) =>
-          tag.prefix === parsedTag.prefix &&
-          cmp(new SemVer(tag.version), '<', new SemVer(parsedTag.version)),
+          tag.prefix === currentTag.prefix &&
+          cmp(new SemVer(tag.version), '<', new SemVer(currentTag.version)),
       )[0];
   }
 
