@@ -19,6 +19,7 @@
   "dependencies": {
     "@actions/core": "1.8.2",
     "@actions/github": "5.0.3",
+    "axios": "0.27.2",
     "semver": "7.3.7"
   },
   "devDependencies": {
@@ -27,6 +28,7 @@
     "@types/semver": "7.3.9",
     "@typescript-eslint/parser": "5.23.0",
     "@vercel/ncc": "0.33.4",
+    "axios-mock-adapter": "1.20.0",
     "eslint": "8.15.0",
     "eslint-import-resolver-typescript": "2.7.1",
     "eslint-plugin-github": "4.3.6",

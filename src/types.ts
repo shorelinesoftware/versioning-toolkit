@@ -20,6 +20,11 @@ export type Equals<X, Y> = (<T>() => T extends X ? 1 : 2) extends <
   ? true
   : false;
 
+export type PaginationParams = {
+  perPage: number;
+  page: number;
+};
+
 export type ChangelogItem =
   | {
       issueKey: string;

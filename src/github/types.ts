@@ -3,8 +3,8 @@ import { Endpoints } from '@octokit/types';
 import { Tag } from '../models/Tag';
 
 export type ListRequestParams = {
-  per_page?: components['parameters']['per-page'];
-  page?: components['parameters']['page'];
+  per_page: components['parameters']['per-page'];
+  page: components['parameters']['page'];
 };
 
 export type GithubTag = {

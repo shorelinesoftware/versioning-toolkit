@@ -169,7 +169,7 @@ describe('generateChangelog', () => {
         }),
       ),
     ),
-    getCustomField: jest.fn<Promise<CustomField | undefined>, [string]>(),
+    getCustomFields: jest.fn<Promise<CustomField[]>, []>(),
     updateIssue: jest.fn<Promise<void>, [IssueFieldUpdates, string]>(),
   };
   const generateChangelog = generateChangelogBuilder(

@@ -19,6 +19,8 @@ export const mockedServiceLocator: Mocked<ServiceLocator> = {
   autoIncrementPatch: jest.fn(),
   makePrerelease: jest.fn(),
   makeRelease: jest.fn(),
+  addTagToJiraIssues: jest.fn(),
+  generateChangelog: jest.fn(),
 };
 
 export const mockedActionAdapter: Mocked<ActionAdapter> = {

@@ -20,7 +20,7 @@ function paginate<TListItem, TRequestParams extends ListRequestParams>(
     if (per_page == null) {
       return Promise.resolve(list);
     }
-    return Promise.resolve(list.slice((page - 1) * per_page, page * per_page));
+    return Promise.resolve(list.slice(page * per_page, (page + 1) * per_page));
   };
 }
 
@@ -69,15 +69,10 @@ describe('GithubClient', () => {
   );
   const githubClient = new GithubClient(mockedGithubAdapter);
   describe('listSemVerTags', () => {
-    it('should load first page', async () => {
+    it('should load first page only', async () => {
       const tags = await githubClient.listSemVerTags(false);
       expect(tags.length).toBe(PER_PAGE);
       expect(tags[PER_PAGE - 1].value).toBe(`master-0.0.${PER_PAGE - 1}`);
-    });
-    it('should load second page', async () => {
-      const tags = await githubClient.listSemVerTags(false, 2);
-      expect(tags.length).toBe(PER_PAGE);
-      expect(tags[PER_PAGE - 1].value).toBe(`master-0.0.${TOTAL_TAGS - 1}`);
     });
     it('should load all tags', async () => {
       const tags = await githubClient.listSemVerTags(true);

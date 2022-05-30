@@ -1,6 +1,7 @@
 import { Tag } from '../models/Tag';
+import { fetchPages } from '../utils';
 import { Commit, GithubAdapter, GithubTag } from './types';
-import { fetchPages, isNotFoundError } from './utils';
+import { isNotFoundError } from './utils';
 
 export interface IGithubClient {
   listSemVerTags: (
@@ -28,11 +29,14 @@ export class GithubClient implements IGithubClient {
     this._githubAdapter = githubAdapter;
   }
 
-  async listSemVerTags(shouldFetchAllTags = true, page = 1) {
+  async listSemVerTags(shouldFetchAllTags = true) {
     return fetchPages({
       shouldFetchAll: shouldFetchAllTags,
-      fetchFn: this._githubAdapter.listTags,
-      initialPage: page,
+      fetchFn: async ({ page, perPage }) =>
+        this._githubAdapter.listTags({
+          per_page: perPage,
+          page,
+        }),
     }).then((tags) => {
       return tags
         .map((tag) => Tag.parse(tag.name))
@@ -43,14 +47,13 @@ export class GithubClient implements IGithubClient {
   async compareTags(baseTag: Tag, headTag: Tag) {
     return fetchPages({
       shouldFetchAll: true,
-      fetchFn: async ({ per_page, page }) =>
+      fetchFn: async ({ perPage, page }) =>
         this._githubAdapter.compareRefs({
-          per_page,
+          per_page: perPage,
           page,
           headRef: headTag.value,
           baseRef: baseTag.value,
         }),
-      initialPage: 1,
     });
   }
 

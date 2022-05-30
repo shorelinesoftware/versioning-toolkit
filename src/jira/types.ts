@@ -1,14 +1,14 @@
 export interface IJiraClient {
   getIssuesByKeys: (keys: string[]) => Promise<Issue[]>;
-  getCustomField: (fieldName: string) => Promise<CustomField | undefined>;
+  getCustomFields: () => Promise<CustomField[]>;
   updateIssue: (
-    updatedIssue: IssueFieldUpdates,
+    issueFieldUpdates: IssueFieldUpdates,
     issueKey: string,
   ) => Promise<void>;
 }
 
 export type CustomField = {
-  id: number;
+  id: string;
   name: string;
 };
 
@@ -16,6 +16,19 @@ export type IssueFieldUpdates = {
   fields: {
     [customField: string]: unknown;
   };
+};
+
+export type SearchRequestParams = {
+  jql: `key in (${string})`;
+  startAt: number;
+  maxResults: number;
+};
+
+export type SearchResponse = {
+  startAt: number;
+  maxResults: number;
+  totalNumber: number;
+  issues: Issue[];
 };
 
 export type JiraUser = {

@@ -56,7 +56,7 @@ describe('addTagToJiraIssues', () => {
     type: 'unknown',
   };
   const customField: CustomField = {
-    id: 1,
+    id: '1',
     name: tagFieldName,
   };
   const issuesKeys = [issue1.key, issue2.key];
@@ -64,8 +64,8 @@ describe('addTagToJiraIssues', () => {
     getIssuesByKeys: jest.fn(async (_keys) =>
       Promise.resolve<Issue[]>([issue1, issue2]),
     ),
-    getCustomField: jest.fn<Promise<CustomField | undefined>, [string]>(
-      async () => Promise.resolve(customField),
+    getCustomFields: jest.fn<Promise<CustomField[]>, []>(async () =>
+      Promise.resolve([customField]),
     ),
     updateIssue: jest.fn<Promise<void>, [IssueFieldUpdates, string]>(async () =>
       Promise.resolve(),
@@ -136,9 +136,7 @@ describe('addTagToJiraIssues', () => {
     });
   });
   it('returns empty array if tagField can not be found', async () => {
-    mockedJiraClient.getCustomField.mockReturnValueOnce(
-      Promise.resolve(undefined),
-    );
+    mockedJiraClient.getCustomFields.mockReturnValueOnce(Promise.resolve([]));
     const result = await addTagToJiraIssues({
       issuesKeys,
       tagFieldName,

@@ -32,7 +32,10 @@ export function addTagToJiraIssuesBuilder(
       .map((item) => item.issueKey)
       .filter((item): item is string => item != null);
     const issues = await jiraClient.getIssuesByKeys(issuesKeys);
-    const tagField = await jiraClient.getCustomField(tagFieldName);
+    const fields = await jiraClient.getCustomFields();
+    const tagField = fields.find(
+      (field) => field.name.toLowerCase() === tagFieldName.toLowerCase(),
+    );
     if (tagField == null) {
       return [];
     }

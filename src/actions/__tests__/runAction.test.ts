@@ -1,15 +1,8 @@
-import { ServiceLocator } from '../../services/serviceLocator';
 import { Mocked } from '../../testUtils';
 import { Inputs } from '../../types';
 import { ActionAdapter } from '../actionAdapter';
 import { runAction } from '../actionRunner';
-import { mockedGithubClient } from './mocks';
-
-const mockedServiceLocator: Mocked<ServiceLocator> = {
-  autoIncrementPatch: jest.fn(),
-  makePrerelease: jest.fn(),
-  makeRelease: jest.fn(),
-};
+import { mockedGithubClient, mockedServiceLocator } from './mocks';
 
 const mockedActionAdapter: Mocked<ActionAdapter> = {
   getInput: jest.fn(),
