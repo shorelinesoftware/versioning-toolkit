@@ -21,12 +21,19 @@ export async function addTagToJiraIssues({
   addTagToJiraIssuesBuilder,
 }: AddTagToJiraIssuesParams) {
   const { getInput, info } = actionAdapter;
+  const jiraTagFieldName = getInput(Inputs.jiraTagFieldName, {
+    required: true,
+  });
+  const jiraApiToken = getInput(Inputs.jiraApiToken, { required: true });
+  const jiraOrgOrigin = getInput(Inputs.jiraOrgOrigin, { required: true });
+  const jiraUserEmail = getInput(Inputs.jiraUserEmail, { required: true });
+
   const jiraClient = getJiraClient(
     {
-      token: '',
-      email: '',
+      token: jiraApiToken,
+      email: jiraUserEmail,
     },
-    '',
+    jiraOrgOrigin,
   );
   const generateChangelog = generateChangelogBuilder(githubClient, jiraClient);
   const addTagToJiraIssuesService = addTagToJiraIssuesBuilder(
@@ -35,10 +42,9 @@ export async function addTagToJiraIssues({
     actionAdapter.info,
   );
   const tag = getInput(Inputs.tag, { required: true });
-  const tagFieldName = getInput(Inputs.jiraTagFieldName, { required: true });
   const result = await addTagToJiraIssuesService({
     rawTag: tag,
-    tagFieldName,
+    tagFieldName: jiraTagFieldName,
   });
   const notUpdatedIssues = result.allIssues.filter(
     (key) => !result.updatedIssues.includes(key),

@@ -22,7 +22,16 @@ inputs:
     description: 'the tag'
     required: false
   jiraTagFieldName:
-    description: 'jira tag field name'
+    description: 'Jira tag field name'
+    required: false
+  jiraUserEmail:
+    description: 'Jira user email'
+    required: false
+  jiraApiToken:
+    description: 'Jira API token'
+    required: false
+  jiraOrgOrigin:
+    description: 'Jira org origin. Example https://foo.atlassian.net'
     required: false
   majorSegment:
     description: 'major segment of the release tag version. If not specified previous release tag value is used'

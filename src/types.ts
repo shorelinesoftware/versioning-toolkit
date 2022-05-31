@@ -7,6 +7,9 @@ export enum Inputs {
   releasePrefix = 'releasePrefix',
   tag = 'tag',
   jiraTagFieldName = 'jiraTagFieldName',
+  jiraUserEmail = 'jiraUserEmail',
+  jiraApiToken = 'jiraApiToken',
+  jiraOrgOrigin = 'jiraOrgOrigin',
 }
 
 export type ActionTypes =
