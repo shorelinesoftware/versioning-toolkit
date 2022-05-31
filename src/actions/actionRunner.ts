@@ -1,24 +1,32 @@
 import { IGithubClient } from '../github/GithubClient';
-import { ServiceLocator } from '../services/serviceLocator';
+import { IJiraClient, JiraUser } from '../jira/types';
+import { GetServiceLocator } from '../services/serviceLocator';
 import { ActionTypes, Inputs } from '../types';
 import { assertUnreachable } from '../utils';
 import { ActionAdapter } from './actionAdapter';
+import { addTagToJiraIssues } from './addTagToJiraIssues';
 import { autoIncrementPatch } from './autoIncrementPatch';
 import { makePrerelease } from './makePrerelease';
 import { makeRelease } from './makeRelease';
 
 export type ActionRunnerParams = {
-  githubClient: IGithubClient;
-  serviceLocator: ServiceLocator;
+  githubToken: string;
+  getServiceLocator: GetServiceLocator;
   actionAdapter: ActionAdapter;
+  getJiraClient: (jiraUser: JiraUser, orgOrigin: string) => IJiraClient;
+  getGithubClient: (token: string) => IGithubClient;
 };
 
 export async function runAction({
-  serviceLocator,
+  githubToken,
   actionAdapter,
-  githubClient,
+  getServiceLocator,
+  getGithubClient,
+  getJiraClient,
 }: ActionRunnerParams) {
   const { setFailed, getInput } = actionAdapter;
+  const githubClient = getGithubClient(githubToken);
+  const serviceLocator = getServiceLocator();
   try {
     const actionName = getInput(Inputs.actionName, {
       required: true,
@@ -43,6 +51,15 @@ export async function runAction({
           actionAdapter,
           githubClient,
           makeReleaseService: serviceLocator.makeRelease,
+        });
+      }
+      case 'addTagToJiraIssues': {
+        return await addTagToJiraIssues({
+          actionAdapter,
+          generateChangelogBuilder: serviceLocator.generateChangelogBuilder,
+          addTagToJiraIssuesBuilder: serviceLocator.addTagToJiraIssuesBuilder,
+          getJiraClient,
+          githubClient,
         });
       }
       default: {

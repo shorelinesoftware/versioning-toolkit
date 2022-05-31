@@ -20015,7 +20015,8 @@ var Inputs;
     Inputs["majorSegment"] = "majorSegment";
     Inputs["minorSegment"] = "minorSegment";
     Inputs["releasePrefix"] = "releasePrefix";
-    Inputs["mainTag"] = "mainTag";
+    Inputs["tag"] = "tag";
+    Inputs["jiraTagFieldName"] = "jiraTagFieldName";
 })(Inputs || (Inputs = {}));
 
 ;// CONCATENATED MODULE: ./lib/utils.js
@@ -20053,6 +20054,29 @@ async function fetchPages(params) {
 }
 function toBasicAuth(name, password) {
     return `Basic ${Buffer.from(`${name}:${password}`).toString('base64')}`;
+}
+
+;// CONCATENATED MODULE: ./lib/actions/addTagToJiraIssues.js
+
+async function addTagToJiraIssues({ actionAdapter, getJiraClient, githubClient, generateChangelogBuilder, addTagToJiraIssuesBuilder, }) {
+    const { getInput, info } = actionAdapter;
+    const jiraClient = getJiraClient({
+        token: '',
+        email: '',
+    }, '');
+    const generateChangelog = generateChangelogBuilder(githubClient, jiraClient);
+    const addTagToJiraIssuesService = addTagToJiraIssuesBuilder(generateChangelog, jiraClient, actionAdapter.info);
+    const tag = getInput(Inputs.tag, { required: true });
+    const tagFieldName = getInput(Inputs.jiraTagFieldName, { required: true });
+    const result = await addTagToJiraIssuesService({
+        rawTag: tag,
+        tagFieldName,
+    });
+    const notUpdatedIssues = result.allIssues.filter((key) => !result.updatedIssues.includes(key));
+    if (notUpdatedIssues.length !== 0) {
+        info(`issues that were not updated: ${notUpdatedIssues.join(',')}`);
+    }
+    info(`updated issues: ${result.updatedIssues.join(',')}`);
 }
 
 ;// CONCATENATED MODULE: ./lib/actions/utils.js
@@ -20109,7 +20133,7 @@ async function makeRelease({ actionAdapter, githubClient, makeReleaseService, })
     const releasePrefix = getInput(Inputs.releasePrefix, {
         required: true,
     });
-    const mainTag = getInput(Inputs.mainTag, { required: true });
+    const mainTag = getInput(Inputs.tag, { required: true });
     const minorSegment = getInput(Inputs.minorSegment);
     const majorSegment = getInput(Inputs.majorSegment);
     const push = getInput(Inputs.push) === 'true';
@@ -20139,8 +20163,11 @@ async function makeRelease({ actionAdapter, githubClient, makeReleaseService, })
 
 
 
-async function runAction({ serviceLocator, actionAdapter, githubClient, }) {
+
+async function runAction({ githubToken, actionAdapter, getServiceLocator, getGithubClient, getJiraClient, }) {
     const { setFailed, getInput } = actionAdapter;
+    const githubClient = getGithubClient(githubToken);
+    const serviceLocator = getServiceLocator();
     try {
         const actionName = getInput(Inputs.actionName, {
             required: true,
@@ -20165,6 +20192,15 @@ async function runAction({ serviceLocator, actionAdapter, githubClient, }) {
                     actionAdapter,
                     githubClient,
                     makeReleaseService: serviceLocator.makeRelease,
+                });
+            }
+            case 'addTagToJiraIssues': {
+                return await addTagToJiraIssues({
+                    actionAdapter,
+                    generateChangelogBuilder: serviceLocator.generateChangelogBuilder,
+                    addTagToJiraIssuesBuilder: serviceLocator.addTagToJiraIssuesBuilder,
+                    getJiraClient,
+                    githubClient,
                 });
             }
             default: {
@@ -20591,12 +20627,12 @@ class JiraClient {
     }
 }
 
-;// CONCATENATED MODULE: ./lib/services/addTagToJiraIssue.js
+;// CONCATENATED MODULE: ./lib/services/addTagToJiraIssues.js
 
 function checkIsStringArray(field) {
     return (Array.isArray(field) && field.every((item) => typeof item === 'string'));
 }
-function addTagToJiraIssuesBuilder(generateChangelogService, jiraClient) {
+function addTagToJiraIssuesBuilder(generateChangelogService, jiraClient, info) {
     return async ({ rawTag, tagFieldName }) => {
         const tag = new Tag(rawTag);
         const changelog = await generateChangelogService({ rawHeadTag: tag.value });
@@ -20605,10 +20641,14 @@ function addTagToJiraIssuesBuilder(generateChangelogService, jiraClient) {
             .map((item) => item.issueKey)
             .filter((item) => item != null);
         const issues = await jiraClient.getIssuesByKeys(issuesKeys);
+        const foundIssueKeys = issues.map((i) => i.key);
         const fields = await jiraClient.getCustomFields();
         const tagField = fields.find((field) => field.name.toLowerCase() === tagFieldName.toLowerCase());
         if (tagField == null) {
-            return [];
+            return {
+                updatedIssues: [],
+                allIssues: foundIssueKeys,
+            };
         }
         const updatedIssues = [];
         await Promise.all(issues.map((issue) => {
@@ -20623,9 +20663,14 @@ function addTagToJiraIssuesBuilder(generateChangelogService, jiraClient) {
                 },
             }, issue.key)
                 .then(() => updatedIssues.push(issue.key))
-                .catch(() => { });
+                .catch((error) => {
+                info(error.toString());
+            });
         }));
-        return updatedIssues;
+        return {
+            updatedIssues,
+            allIssues: foundIssueKeys,
+        };
     };
 }
 
@@ -20792,14 +20837,13 @@ async function makeRelease_makeRelease({ releasePrefix, githubClient, rowMainTag
 
 
 
-function getServiceLocator(githubClient, jiraClient) {
-    const generateChangelog = generateChangelogBuilder(githubClient, jiraClient);
+function getServiceLocator() {
     return {
         autoIncrementPatch: autoIncrementPatch_autoIncrementPatch,
         makePrerelease: makePrerelease_makePrerelease,
         makeRelease: makeRelease_makeRelease,
-        generateChangelog,
-        addTagToJiraIssues: addTagToJiraIssuesBuilder(generateChangelog, jiraClient),
+        generateChangelogBuilder: generateChangelogBuilder,
+        addTagToJiraIssuesBuilder: addTagToJiraIssuesBuilder,
     };
 }
 
@@ -20817,15 +20861,12 @@ async function run() {
         if (githubToken == null) {
             throw new Error('GITHUB_TOKEN is not provided');
         }
-        const githubClient = new GithubClient(getGithubAdapter(githubToken));
-        const serviceLocator = getServiceLocator(githubClient, new JiraClient({
-            email: '',
-            token: '',
-        }, ''));
         await runAction({
-            githubClient,
+            githubToken,
             actionAdapter,
-            serviceLocator,
+            getJiraClient: (jiraUser, orgOrigin) => new JiraClient(jiraUser, orgOrigin),
+            getGithubClient: (token) => new GithubClient(getGithubAdapter(token)),
+            getServiceLocator: getServiceLocator,
         });
     }
     catch (e) {

@@ -1,9 +1,7 @@
 import { Tag } from '../../models/Tag';
-import { MakeReleaseParams } from '../../services/makeRelease';
 import { AssertToHaveBeenAnyNthCalledWithParams } from '../../testUtils';
 import { Inputs } from '../../types';
-import { runAction } from '../actionRunner';
-import { assertGetInputIsCalled, assertSingleActionIsCalled } from './helpers';
+import { makeRelease } from '../makeRelease';
 import {
   mockedActionAdapter,
   mockedServiceLocator,
@@ -46,7 +44,7 @@ describe('runs makeRelease', () => {
       switch (name as Inputs) {
         case Inputs.actionName:
           return 'makeRelease';
-        case Inputs.mainTag:
+        case Inputs.tag:
           return mainTag.value;
         case Inputs.releasePrefix:
           return releasePrefix;
@@ -67,44 +65,14 @@ describe('runs makeRelease', () => {
     newReleaseBranch: 'stable-1.0',
   };
 
-  it('when action name is makeRelease', async () => {
-    mockedServiceLocator.makeRelease.mockReturnValueOnce(
-      Promise.resolve(release),
-    );
-    await runAction({
-      githubClient: mockedGithubClient,
-      actionAdapter: mockedActionAdapter,
-      serviceLocator: mockedServiceLocator,
-    });
-
-    const params: MakeReleaseParams = {
-      githubClient: mockedGithubClient,
-      rowMainTag: mainTag.value,
-      releasePrefix,
-      rowMajorSegment: majorSegment,
-      rowMinorSegment: minorSegment,
-      push: false,
-    };
-
-    expect(mockedServiceLocator.makeRelease).toHaveBeenCalledWith(params);
-    assertGetInputIsCalled(Inputs.releasePrefix, {
-      required: true,
-    });
-    assertGetInputIsCalled(Inputs.mainTag, {
-      required: true,
-    });
-    assertGetInputIsCalled(Inputs.minorSegment);
-    assertGetInputIsCalled(Inputs.majorSegment);
-    assertSingleActionIsCalled('makeRelease');
-  });
   it('and informs about new release and outputs result', async () => {
     mockedServiceLocator.makeRelease.mockReturnValueOnce(
       Promise.resolve(release),
     );
-    await runAction({
+    await makeRelease({
       githubClient: mockedGithubClient,
       actionAdapter: mockedActionAdapter,
-      serviceLocator: mockedServiceLocator,
+      makeReleaseService: mockedServiceLocator.makeRelease,
     });
     expect(mockedActionAdapter.info).toHaveBeenNthCalledWith(
       1,
@@ -128,7 +96,7 @@ describe('runs makeRelease', () => {
       switch (name as Inputs) {
         case Inputs.actionName:
           return 'makeRelease';
-        case Inputs.mainTag:
+        case Inputs.tag:
           return mainTag.value;
         case Inputs.releasePrefix:
           return releasePrefix;
@@ -142,10 +110,10 @@ describe('runs makeRelease', () => {
           throw new Error('Input not found');
       }
     });
-    await runAction({
+    await makeRelease({
       githubClient: mockedGithubClient,
       actionAdapter: mockedActionAdapter,
-      serviceLocator: mockedServiceLocator,
+      makeReleaseService: mockedServiceLocator.makeRelease,
     });
     expect(mockedActionAdapter.info).toHaveBeenNthCalledWith(
       1,

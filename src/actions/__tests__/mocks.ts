@@ -1,5 +1,6 @@
 import { IGithubClient } from '../../github/GithubClient';
 import { GithubTag } from '../../github/types';
+import { IJiraClient } from '../../jira/types';
 import { Tag } from '../../models/Tag';
 import { ServiceLocator } from '../../services/serviceLocator';
 import { Mocked } from '../../testUtils';
@@ -15,12 +16,18 @@ export const mockedGithubClient: IGithubClient = {
   compareTags: jest.fn(async () => Promise.resolve([])),
 };
 
+export const mockedJiraClient: Mocked<IJiraClient> = {
+  getIssuesByKeys: jest.fn(),
+  updateIssue: jest.fn(),
+  getCustomFields: jest.fn(),
+};
+
 export const mockedServiceLocator: Mocked<ServiceLocator> = {
   autoIncrementPatch: jest.fn(),
   makePrerelease: jest.fn(),
   makeRelease: jest.fn(),
-  addTagToJiraIssues: jest.fn(),
-  generateChangelog: jest.fn(),
+  addTagToJiraIssuesBuilder: jest.fn(),
+  generateChangelogBuilder: jest.fn(),
 };
 
 export const mockedActionAdapter: Mocked<ActionAdapter> = {

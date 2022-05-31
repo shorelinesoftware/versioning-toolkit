@@ -26,7 +26,7 @@ describe('JiraClient', () => {
     email: 'foo',
     token: 'bar',
   };
-  const orgOrigin = 'https://shorelineio.atlassian.net';
+  const orgOrigin = 'https://foo.atlassian.net';
   beforeEach(() => {
     axiosMock.reset();
   });

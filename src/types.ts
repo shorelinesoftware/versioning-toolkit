@@ -5,13 +5,15 @@ export enum Inputs {
   majorSegment = 'majorSegment',
   minorSegment = 'minorSegment',
   releasePrefix = 'releasePrefix',
-  mainTag = 'mainTag',
+  tag = 'tag',
+  jiraTagFieldName = 'jiraTagFieldName',
 }
 
 export type ActionTypes =
   | 'autoIncrementPatch'
   | 'makePrerelease'
-  | 'makeRelease';
+  | 'makeRelease'
+  | 'addTagToJiraIssues';
 
 // from https://github.com/Microsoft/TypeScript/issues/27024#issuecomment-421529650
 export type Equals<X, Y> = (<T>() => T extends X ? 1 : 2) extends <

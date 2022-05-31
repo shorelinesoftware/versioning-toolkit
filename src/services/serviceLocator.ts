@@ -1,31 +1,24 @@
-import { IGithubClient } from '../github/GithubClient';
-import { IJiraClient } from '../jira/types';
 import {
-  AddTagToJiraIssues,
+  AddTagToJiraIssuesBuilder,
   addTagToJiraIssuesBuilder,
-} from './addTagToJiraIssue';
+} from './addTagToJiraIssues';
 import { AutoIncrementPatch, autoIncrementPatch } from './autoIncrementPatch';
 import {
-  GenerateChangelog,
+  GenerateChangelogBuilder,
   generateChangelogBuilder,
 } from './generateChangelog';
 import { MakePrerelease, makePrerelease } from './makePrerelease';
 import { MakeRelease, makeRelease } from './makeRelease';
 
-export function getServiceLocator(
-  githubClient: IGithubClient,
-  jiraClient: IJiraClient,
-): ServiceLocator {
-  const generateChangelog = generateChangelogBuilder(githubClient, jiraClient);
+export type GetServiceLocator = typeof getServiceLocator;
+
+export function getServiceLocator(): ServiceLocator {
   return {
     autoIncrementPatch,
     makePrerelease,
     makeRelease,
-    generateChangelog,
-    addTagToJiraIssues: addTagToJiraIssuesBuilder(
-      generateChangelog,
-      jiraClient,
-    ),
+    generateChangelogBuilder,
+    addTagToJiraIssuesBuilder,
   };
 }
 
@@ -33,6 +26,6 @@ export type ServiceLocator = {
   autoIncrementPatch: AutoIncrementPatch;
   makePrerelease: MakePrerelease;
   makeRelease: MakeRelease;
-  generateChangelog: GenerateChangelog;
-  addTagToJiraIssues: AddTagToJiraIssues;
+  generateChangelogBuilder: GenerateChangelogBuilder;
+  addTagToJiraIssuesBuilder: AddTagToJiraIssuesBuilder;
 };

@@ -1,7 +1,6 @@
 import { Tag } from '../../models/Tag';
 import { Inputs } from '../../types';
-import { runAction } from '../actionRunner';
-import { assertGetInputIsCalled, assertSingleActionIsCalled } from './helpers';
+import { autoIncrementPatch } from '../autoIncrementPatch';
 import {
   mockedActionAdapter,
   mockedServiceLocator,
@@ -25,35 +24,15 @@ describe('runs autoIncrementPatch', () => {
   });
   const prefix = 'master';
 
-  it('when action name is autoIncrementPatch', async () => {
-    mockedServiceLocator.autoIncrementPatch.mockReturnValueOnce(
-      Promise.resolve(new Tag('master-1.1.0')),
-    );
-    await runAction({
-      githubClient: mockedGithubClient,
-      actionAdapter: mockedActionAdapter,
-      serviceLocator: mockedServiceLocator,
-    });
-    expect(mockedServiceLocator.autoIncrementPatch).toHaveBeenCalledWith({
-      githubClient: mockedGithubClient,
-      prefix,
-      pushTag: false,
-      sha: mockedActionAdapter.sha,
-    });
-    assertGetInputIsCalled(Inputs.prefix, { required: true });
-    assertGetInputIsCalled(Inputs.push);
-    assertSingleActionIsCalled('autoIncrementPatch');
-  });
-
   it('and sets output when tag is returned', async () => {
     const tag = new Tag('master-1.1.0');
     mockedServiceLocator.autoIncrementPatch.mockReturnValueOnce(
       Promise.resolve(new Tag('master-1.1.0')),
     );
-    await runAction({
+    await autoIncrementPatch({
       githubClient: mockedGithubClient,
       actionAdapter: mockedActionAdapter,
-      serviceLocator: mockedServiceLocator,
+      autoIncrementPatchService: mockedServiceLocator.autoIncrementPatch,
     });
     expect(mockedActionAdapter.setOutput).toHaveBeenCalledWith(
       'NEW_TAG',
@@ -65,10 +44,10 @@ describe('runs autoIncrementPatch', () => {
       Promise.resolve(Promise.resolve(undefined)),
     );
 
-    await runAction({
+    await autoIncrementPatch({
       githubClient: mockedGithubClient,
       actionAdapter: mockedActionAdapter,
-      serviceLocator: mockedServiceLocator,
+      autoIncrementPatchService: mockedServiceLocator.autoIncrementPatch,
     });
     expect(mockedActionAdapter.info).toHaveBeenCalledWith(
       `can't make a new tag from ${prefix}`,
@@ -79,10 +58,10 @@ describe('runs autoIncrementPatch', () => {
     mockedServiceLocator.autoIncrementPatch.mockReturnValueOnce(
       Promise.resolve(new Tag(tag)),
     );
-    await runAction({
+    await autoIncrementPatch({
       githubClient: mockedGithubClient,
       actionAdapter: mockedActionAdapter,
-      serviceLocator: mockedServiceLocator,
+      autoIncrementPatchService: mockedServiceLocator.autoIncrementPatch,
     });
     expect(mockedActionAdapter.info).toHaveBeenCalledWith(`new tag: ${tag}`);
   });
@@ -105,10 +84,10 @@ describe('runs autoIncrementPatch', () => {
       }
     });
 
-    await runAction({
+    await autoIncrementPatch({
       githubClient: mockedGithubClient,
       actionAdapter: mockedActionAdapter,
-      serviceLocator: mockedServiceLocator,
+      autoIncrementPatchService: mockedServiceLocator.autoIncrementPatch,
     });
     expect(mockedActionAdapter.info).toHaveBeenNthCalledWith(
       2,

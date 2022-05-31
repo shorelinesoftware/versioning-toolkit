@@ -6,7 +6,7 @@ import {
 } from '../../jira/types';
 import { Mocked } from '../../testUtils';
 import { ChangelogItem } from '../../types';
-import { addTagToJiraIssuesBuilder } from '../addTagToJiraIssue';
+import { addTagToJiraIssuesBuilder } from '../addTagToJiraIssues';
 import { GenerateChangelog } from '../generateChangelog';
 
 describe('addTagToJiraIssues', () => {
@@ -59,7 +59,6 @@ describe('addTagToJiraIssues', () => {
     id: '1',
     name: tagFieldName,
   };
-  const issuesKeys = [issue1.key, issue2.key];
   const mockedJiraClient: Mocked<IJiraClient> = {
     getIssuesByKeys: jest.fn(async (_keys) =>
       Promise.resolve<Issue[]>([issue1, issue2]),
@@ -77,20 +76,22 @@ describe('addTagToJiraIssues', () => {
   const addTagToJiraIssues = addTagToJiraIssuesBuilder(
     generateChangelog,
     mockedJiraClient,
+    () => {},
   );
   it('adds tag to all existed issues', async () => {
-    const expectedUpdatedIssuesKeys = [issue1.key, issue2.key];
-    const updatedIssuesKeys = await addTagToJiraIssues({
-      issuesKeys,
+    const expectedResult = {
+      updatedIssues: [issue1.key, issue2.key],
+      allIssues: [issue1.key, issue2.key],
+    };
+    const result = await addTagToJiraIssues({
       tagFieldName,
       rawTag: tag,
     });
-    expect(updatedIssuesKeys).toEqual(expectedUpdatedIssuesKeys);
+    expect(result).toEqual(expectedResult);
   });
 
   it('sends request to get issues only for existed issues', async () => {
     await addTagToJiraIssues({
-      issuesKeys,
       tagFieldName,
       rawTag: tag,
     });
@@ -117,11 +118,13 @@ describe('addTagToJiraIssues', () => {
       ]),
     );
     const result = await addTagToJiraIssues({
-      issuesKeys,
       tagFieldName,
       rawTag: tag,
     });
-    expect(result).toEqual([issue1.key]);
+    expect(result).toEqual({
+      updatedIssues: [issue1.key],
+      allIssues: [issue1.key, issue2.key],
+    });
   });
 
   it('appends existed tags when updates issue', async () => {
@@ -130,7 +133,6 @@ describe('addTagToJiraIssues', () => {
       return Promise.resolve();
     });
     await addTagToJiraIssues({
-      issuesKeys,
       tagFieldName,
       rawTag: tag,
     });
@@ -138,21 +140,25 @@ describe('addTagToJiraIssues', () => {
   it('returns empty array if tagField can not be found', async () => {
     mockedJiraClient.getCustomFields.mockReturnValueOnce(Promise.resolve([]));
     const result = await addTagToJiraIssues({
-      issuesKeys,
       tagFieldName,
       rawTag: tag,
     });
-    expect(result).toEqual([]);
+    expect(result).toEqual({
+      updatedIssues: [],
+      allIssues: [issue1.key, issue2.key],
+    });
   });
   it('returns empty array if no issues are updated', async () => {
     mockedJiraClient.getIssuesByKeys.mockReturnValueOnce(Promise.resolve([]));
 
     const result = await addTagToJiraIssues({
-      issuesKeys,
       tagFieldName,
       rawTag: tag,
     });
-    expect(result).toEqual([]);
+    expect(result).toEqual({
+      updatedIssues: [],
+      allIssues: [],
+    });
   });
   it('returns not empty array if some issues are updated', async () => {
     mockedJiraClient.getIssuesByKeys.mockReturnValueOnce(
@@ -160,26 +166,29 @@ describe('addTagToJiraIssues', () => {
     );
 
     const result = await addTagToJiraIssues({
-      issuesKeys,
       tagFieldName,
       rawTag: tag,
     });
-    expect(result).toEqual([issue1.key]);
+    expect(result).toEqual({
+      updatedIssues: [issue1.key],
+      allIssues: [issue1.key],
+    });
   });
   it('does not throw exception if issue can not be updated', async () => {
     mockedJiraClient.updateIssue.mockRejectedValueOnce(new Error());
 
     const result = await addTagToJiraIssues({
-      issuesKeys,
       tagFieldName,
       rawTag: tag,
     });
-    expect(result).toEqual([issue2.key]);
+    expect(result).toEqual({
+      updatedIssues: [issue2.key],
+      allIssues: [issue1.key, issue2.key],
+    });
   });
   it('throws exception if raw tag can not be parsed', async () => {
     await expect(async () =>
       addTagToJiraIssues({
-        issuesKeys,
         tagFieldName,
         rawTag: '123',
       }),

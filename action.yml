@@ -18,8 +18,11 @@ inputs:
   releasePrefix:
     description: 'release branch name and tag name prefix'
     required: false
-  mainTag:
-    description: 'the tag from which release branch is created'
+  tag:
+    description: 'the tag'
+    required: false
+  jiraTagFieldName:
+    description: 'jira tag field name'
     required: false
   majorSegment:
     description: 'major segment of the release tag version. If not specified previous release tag value is used'

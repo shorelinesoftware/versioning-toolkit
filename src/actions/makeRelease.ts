@@ -19,7 +19,7 @@ export async function makeRelease({
   const releasePrefix = getInput(Inputs.releasePrefix, {
     required: true,
   });
-  const mainTag = getInput(Inputs.mainTag, { required: true });
+  const mainTag = getInput(Inputs.tag, { required: true });
   const minorSegment = getInput(Inputs.minorSegment);
   const majorSegment = getInput(Inputs.majorSegment);
   const push = getInput(Inputs.push) === 'true';

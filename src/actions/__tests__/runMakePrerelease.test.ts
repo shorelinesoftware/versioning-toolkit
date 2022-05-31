@@ -1,7 +1,6 @@
 import { Tag } from '../../models/Tag';
 import { Inputs } from '../../types';
-import { runAction } from '../actionRunner';
-import { assertGetInputIsCalled, assertSingleActionIsCalled } from './helpers';
+import { makePrerelease } from '../makePrerelease';
 import {
   mockedActionAdapter,
   mockedServiceLocator,
@@ -25,35 +24,15 @@ describe('runs makePrerelease', () => {
       }
     });
   });
-
-  it('when action name is makePrerelease', async () => {
-    mockedServiceLocator.makePrerelease.mockReturnValueOnce(
-      Promise.resolve(tag),
-    );
-    await runAction({
-      githubClient: mockedGithubClient,
-      actionAdapter: mockedActionAdapter,
-      serviceLocator: mockedServiceLocator,
-    });
-    expect(mockedServiceLocator.makePrerelease).toHaveBeenCalledWith({
-      githubClient: mockedGithubClient,
-      tagPrefix: 'master',
-      sha: 'abc',
-      pushTag: false,
-    });
-    assertGetInputIsCalled(Inputs.prefix, { required: true });
-    assertGetInputIsCalled(Inputs.push);
-    assertSingleActionIsCalled('makePrerelease');
-  });
   it('and sets output when tag is returned', async () => {
     mockedServiceLocator.makePrerelease.mockReturnValueOnce(
       Promise.resolve(tag),
     );
 
-    await runAction({
+    await makePrerelease({
       githubClient: mockedGithubClient,
       actionAdapter: mockedActionAdapter,
-      serviceLocator: mockedServiceLocator,
+      makePrereleaseService: mockedServiceLocator.makePrerelease,
     });
     expect(mockedActionAdapter.setOutput).toHaveBeenCalledWith(
       'NEW_TAG',
@@ -64,10 +43,10 @@ describe('runs makePrerelease', () => {
     mockedServiceLocator.makePrerelease.mockReturnValueOnce(
       Promise.resolve(tag),
     );
-    await runAction({
+    await makePrerelease({
       githubClient: mockedGithubClient,
       actionAdapter: mockedActionAdapter,
-      serviceLocator: mockedServiceLocator,
+      makePrereleaseService: mockedServiceLocator.makePrerelease,
     });
     expect(mockedActionAdapter.info).toHaveBeenCalledWith(`new tag: ${tag}`);
   });
@@ -89,10 +68,10 @@ describe('runs makePrerelease', () => {
       }
     });
 
-    await runAction({
+    await makePrerelease({
       githubClient: mockedGithubClient,
       actionAdapter: mockedActionAdapter,
-      serviceLocator: mockedServiceLocator,
+      makePrereleaseService: mockedServiceLocator.makePrerelease,
     });
     expect(mockedActionAdapter.info).toHaveBeenNthCalledWith(
       2,
