@@ -305,7 +305,12 @@ describe('generateChangelog', () => {
       changelog.sort(changelogSortingPredicate),
     );
   });
-
+  it('returns empty changelog if base tag can not be found', async () => {
+    const changelog = await generateChangelog({
+      rawHeadTag: 'foo-0.0.1',
+    });
+    expect(changelog).toEqual([]);
+  });
   it('throws error if tag can not be parsed', async () => {
     await expect(async () =>
       generateChangelog({

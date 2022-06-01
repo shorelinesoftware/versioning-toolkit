@@ -56,7 +56,11 @@ export function addTagToJiraIssuesBuilder(
           await jiraClient.updateIssue(
             {
               fields: {
-                [tagField.id]: unique([...prevTags, tag.value]),
+                [tagField.id]: unique([
+                  ...prevTags,
+                  tag.value,
+                  tag.createBranch(),
+                ]),
               },
             },
             issue.key,

@@ -24,6 +24,9 @@ export function generateChangelogBuilder(
     const headTag = new Tag(rawHeadTag);
     const tags = await githubClient.listSemVerTags(true);
     const baseTag = Tag.getPreviousTag(tags, headTag);
+    if (baseTag == null) {
+      return [];
+    }
     const commits = await githubClient.compareTags(baseTag, headTag);
     const changeLog: ChangelogItem[] = commits
       .map((commit) => {

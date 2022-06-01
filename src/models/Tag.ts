@@ -181,7 +181,7 @@ export class Tag {
     return highestTag;
   }
 
-  static getPreviousTag(tags: Tag[], currentTag: Tag) {
+  static getPreviousTag(tags: Tag[], currentTag: Tag): Tag | undefined {
     return [...tags]
       .sort(tagComparer)
       .filter(

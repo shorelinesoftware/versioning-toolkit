@@ -20692,7 +20692,11 @@ function addTagToJiraIssuesBuilder(generateChangelogService, jiraClient, info) {
             try {
                 await jiraClient.updateIssue({
                     fields: {
-                        [tagField.id]: unique([...prevTags, tag.value]),
+                        [tagField.id]: unique([
+                            ...prevTags,
+                            tag.value,
+                            tag.createBranch(),
+                        ]),
                     },
                 }, issue.key);
                 updatedIssues.push(issue.key);
@@ -20736,6 +20740,9 @@ function generateChangelogBuilder(githubClient, jiraClient) {
         const headTag = new Tag(rawHeadTag);
         const tags = await githubClient.listSemVerTags(true);
         const baseTag = Tag.getPreviousTag(tags, headTag);
+        if (baseTag == null) {
+            return [];
+        }
         const commits = await githubClient.compareTags(baseTag, headTag);
         const changeLog = commits
             .map((commit) => {

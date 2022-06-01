@@ -11,6 +11,7 @@ import { GenerateChangelog } from '../generateChangelog';
 
 describe('addTagToJiraIssues', () => {
   const tag = 'main-1.0.0';
+  const branch = 'main-1.0';
   const customField: CustomField = {
     id: '1',
     name: 'tag',
@@ -154,11 +155,11 @@ describe('addTagToJiraIssues', () => {
     });
   });
 
-  it('appends existed tags when updates issue', async () => {
+  it('appends tag and branch to existed tags when updates issue', async () => {
     const expectErrors: unknown[] = [];
     mockedJiraClient.updateIssue.mockImplementationOnce(async (updates) => {
       try {
-        expect(updates.fields[customField.id]).toEqual([...tags, tag]);
+        expect(updates.fields[customField.id]).toEqual([...tags, tag, branch]);
       } catch (e) {
         expectErrors.push(e);
       }
@@ -172,7 +173,7 @@ describe('addTagToJiraIssues', () => {
       throw expectError;
     }
   });
-  it('removes duplicated tags when updates issue', async () => {
+  it('removes duplicates from tag field when updates issue', async () => {
     mockedJiraClient.getIssuesByKeys.mockReturnValueOnce(
       Promise.resolve([
         {
@@ -192,7 +193,7 @@ describe('addTagToJiraIssues', () => {
     const expectErrors: unknown[] = [];
     mockedJiraClient.updateIssue.mockImplementationOnce(async (updates) => {
       try {
-        expect(updates.fields[customField.id]).toEqual([tag]);
+        expect(updates.fields[customField.id]).toEqual([tag, branch]);
       } catch (e) {
         expectErrors.push(e);
       }
