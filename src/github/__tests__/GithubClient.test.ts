@@ -78,6 +78,10 @@ describe('GithubClient', () => {
       const tags = await githubClient.listSemVerTags(true);
       expect(tags.length).toBe(TOTAL_TAGS);
     });
+    it('should load all tags by default', async () => {
+      const tags = await githubClient.listSemVerTags();
+      expect(tags.length).toBe(TOTAL_TAGS);
+    });
     it('should filter out bad tags', async () => {
       const tags = await githubClient.listSemVerTags(true);
       expect(tags.every((t) => t != null)).toBe(true);

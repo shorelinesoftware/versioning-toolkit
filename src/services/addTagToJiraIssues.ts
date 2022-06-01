@@ -48,7 +48,7 @@ export function addTagToJiraIssuesBuilder(
     const updatedIssues: string[] = [];
     await Promise.all(
       issues.map(async (issue) => {
-        const prevTags = issue.fields[tagField.name] ?? [];
+        const prevTags = issue.fields[tagField.id] ?? [];
         if (!checkIsStringArray(prevTags)) {
           return;
         }

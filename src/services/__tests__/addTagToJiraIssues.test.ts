@@ -11,7 +11,11 @@ import { GenerateChangelog } from '../generateChangelog';
 
 describe('addTagToJiraIssues', () => {
   const tag = 'main-1.0.0';
-  const tagFieldName = 'tag';
+  const customField: CustomField = {
+    id: '1',
+    name: 'tag',
+  };
+  const tagFieldName = customField.name;
   const tags = ['tag1', 'tag2'];
   const issue1: Issue = {
     id: 1,
@@ -22,7 +26,7 @@ describe('addTagToJiraIssues', () => {
         name: '1',
       },
       summary: '1',
-      [tagFieldName]: tags,
+      [customField.id]: tags,
     },
   };
   const issue2: Issue = {
@@ -34,7 +38,7 @@ describe('addTagToJiraIssues', () => {
         name: '2',
       },
       summary: '2',
-      [tagFieldName]: tags,
+      [customField.id]: tags,
     },
   };
   const changelog1: ChangelogItem = {
@@ -55,10 +59,7 @@ describe('addTagToJiraIssues', () => {
     summary: '123',
     type: 'unknown',
   };
-  const customField: CustomField = {
-    id: '1',
-    name: tagFieldName,
-  };
+
   const mockedJiraClient: Mocked<IJiraClient> = {
     getIssuesByKeys: jest.fn(async (_keys) =>
       Promise.resolve<Issue[]>([issue1, issue2]),
@@ -101,8 +102,33 @@ describe('addTagToJiraIssues', () => {
       issue2.key,
     ]);
   });
-
-  it('skips issues which does not have tag field', async () => {
+  it('skips issue if tag field is not array', async () => {
+    mockedJiraClient.getIssuesByKeys.mockReturnValueOnce(
+      Promise.resolve([
+        issue1,
+        {
+          ...issue2,
+          fields: {
+            issuetype: {
+              id: 2,
+              name: '2',
+            },
+            summary: '2',
+            [customField.id]: 'foo',
+          },
+        },
+      ]),
+    );
+    const result = await addTagToJiraIssues({
+      tagFieldName,
+      rawTag: tag,
+    });
+    expect(result).toEqual({
+      updatedIssues: [issue1.key],
+      allIssues: [issue1.key, issue2.key],
+    });
+  });
+  it('adds tag field if issue does not have it', async () => {
     mockedJiraClient.getIssuesByKeys.mockReturnValueOnce(
       Promise.resolve([
         issue1,
@@ -123,7 +149,7 @@ describe('addTagToJiraIssues', () => {
       rawTag: tag,
     });
     expect(result).toEqual({
-      updatedIssues: [issue1.key],
+      updatedIssues: [issue1.key, issue2.key],
       allIssues: [issue1.key, issue2.key],
     });
   });
@@ -132,7 +158,7 @@ describe('addTagToJiraIssues', () => {
     const expectErrors: unknown[] = [];
     mockedJiraClient.updateIssue.mockImplementationOnce(async (updates) => {
       try {
-        expect(updates.fields[tagFieldName]).toEqual([...tags, tag]);
+        expect(updates.fields[customField.id]).toEqual([...tags, tag]);
       } catch (e) {
         expectErrors.push(e);
       }
@@ -158,7 +184,7 @@ describe('addTagToJiraIssues', () => {
               name: '2',
             },
             summary: '2',
-            [tagFieldName]: [tag],
+            [customField.id]: [tag],
           },
         },
       ]),
@@ -166,7 +192,7 @@ describe('addTagToJiraIssues', () => {
     const expectErrors: unknown[] = [];
     mockedJiraClient.updateIssue.mockImplementationOnce(async (updates) => {
       try {
-        expect(updates.fields[tagFieldName]).toEqual([tag]);
+        expect(updates.fields[customField.id]).toEqual([tag]);
       } catch (e) {
         expectErrors.push(e);
       }

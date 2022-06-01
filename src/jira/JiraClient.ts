@@ -65,7 +65,8 @@ export class JiraClient implements IJiraClient {
                 statusText: e.response.statusText,
               }
             : undefined,
-          e.request,
+          e.config.url ?? '',
+          options.method,
         );
       }
       throw e;

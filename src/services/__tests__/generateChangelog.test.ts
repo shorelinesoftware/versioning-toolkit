@@ -150,7 +150,7 @@ describe('generateChangelog', () => {
       Promise.resolve(commits),
     ),
   };
-  const issueType = 'bug';
+  const issuetype = 'bug';
   const mockedJiraClient: Mocked<IJiraClient> = {
     getIssuesByKeys: jest.fn(async (_keys) =>
       Promise.resolve<Issue[]>(
@@ -159,9 +159,9 @@ describe('generateChangelog', () => {
             id: index,
             key,
             fields: {
-              issueType: {
+              issuetype: {
                 id: index,
-                name: issueType,
+                name: issuetype,
               },
               summary: `${key}-${index}`,
             },
@@ -183,7 +183,7 @@ describe('generateChangelog', () => {
           summary: `${key}-${index}`,
           issueKey: key,
           existsInJira: true,
-          type: issueType,
+          type: issuetype,
         };
       }),
       ...notMatchableJiraKeys.map((key) => {
@@ -252,9 +252,9 @@ describe('generateChangelog', () => {
       id: 1,
       key: 'FOO-1',
       fields: {
-        issueType: {
+        issuetype: {
           id: 1,
-          name: issueType,
+          name: issuetype,
         },
         summary: 'sum1',
       },
@@ -263,9 +263,9 @@ describe('generateChangelog', () => {
       id: 2,
       key: 'FOO-2',
       fields: {
-        issueType: {
+        issuetype: {
           id: 2,
-          name: issueType,
+          name: issuetype,
         },
         summary: 'sum2',
       },
@@ -292,13 +292,13 @@ describe('generateChangelog', () => {
         existsInJira: true,
         issueKey: issue1.key,
         summary: issue1.fields.summary,
-        type: issueType,
+        type: issuetype,
       },
       {
         existsInJira: true,
         issueKey: issue2.key,
         summary: issue2.fields.summary,
-        type: issueType,
+        type: issuetype,
       },
     ];
     expect(expectedChangeLog.sort(changelogSortingPredicate)).toEqual(

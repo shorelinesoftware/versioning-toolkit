@@ -2,7 +2,7 @@ import { JiraRequestError } from '../JiraRequestError';
 
 describe('JiraRequestError', () => {
   describe('toString', () => {
-    it('transforms all fields to string correctly', () => {
+    it('formats error', () => {
       const error = new JiraRequestError(
         'test',
         'error',
@@ -16,7 +16,8 @@ describe('JiraRequestError', () => {
           },
           statusText: '123',
         },
-        {},
+        '/foo',
+        'POST',
       );
       expect(error.toString()).toBe(
         'message: test\n' +
@@ -25,7 +26,8 @@ describe('JiraRequestError', () => {
           'data: {\n' +
           '  "foo": "1"\n' +
           '}\n' +
-          'request: {}',
+          'url: /foo\n' +
+          'method: POST',
       );
     });
   });

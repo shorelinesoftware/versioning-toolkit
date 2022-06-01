@@ -20551,12 +20551,14 @@ var axios_default = /*#__PURE__*/__nccwpck_require__.n(axios);
 class JiraRequestError extends Error {
     code;
     response;
-    request;
-    constructor(message, code, response, request) {
+    url;
+    method;
+    constructor(message, code, response, url, method) {
         super(message);
         this.code = code;
         this.response = response;
-        this.request = request;
+        this.url = url;
+        this.method = method;
         this.name = 'JiraRequestError';
     }
     toString() {
@@ -20568,7 +20570,9 @@ class JiraRequestError extends Error {
             '\n' +
             `data: ${JSON.stringify(this.response?.data, undefined, 2)}` +
             `\n` +
-            `request: ${JSON.stringify(this.request, undefined, 2)}`);
+            `url: ${this.url}` +
+            `\n` +
+            `method: ${this.method}`);
     }
 }
 
@@ -20612,7 +20616,7 @@ class JiraClient {
                         status: e.response.status,
                         statusText: e.response.statusText,
                     }
-                    : undefined, e.request);
+                    : undefined, e.config.url ?? '', options.method);
             }
             throw e;
         }
@@ -20681,7 +20685,7 @@ function addTagToJiraIssuesBuilder(generateChangelogService, jiraClient, info) {
         }
         const updatedIssues = [];
         await Promise.all(issues.map(async (issue) => {
-            const prevTags = issue.fields[tagField.name] ?? [];
+            const prevTags = issue.fields[tagField.id] ?? [];
             if (!checkIsStringArray(prevTags)) {
                 return;
             }

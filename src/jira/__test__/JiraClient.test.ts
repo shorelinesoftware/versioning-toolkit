@@ -152,4 +152,12 @@ describe('JiraClient', () => {
       jiraClient.getCustomFields(),
     ).rejects.toBeInstanceOf(JiraRequestError);
   });
+  it('rethrows Error if not AxiosError', async () => {
+    axiosMock.onAny().reply(() => {
+      throw new Error();
+    });
+    await expect(async () => jiraClient.getCustomFields()).rejects.toEqual(
+      new Error(),
+    );
+  });
 });

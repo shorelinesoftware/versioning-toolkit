@@ -10,7 +10,8 @@ export class JiraRequestError extends Error {
           headers: Record<string, string> | undefined;
         }
       | undefined,
-    public request: unknown,
+    public url: string,
+    public method: 'POST' | 'GET' | 'PUT' | 'DELETE' | 'PATCH',
   ) {
     super(message);
     this.name = 'JiraRequestError';
@@ -26,7 +27,9 @@ export class JiraRequestError extends Error {
       '\n' +
       `data: ${JSON.stringify(this.response?.data, undefined, 2)}` +
       `\n` +
-      `request: ${JSON.stringify(this.request, undefined, 2)}`
+      `url: ${this.url}` +
+      `\n` +
+      `method: ${this.method}`
     );
   }
 }
