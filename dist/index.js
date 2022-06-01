@@ -20742,6 +20742,10 @@ function generateChangelogBuilder(githubClient, jiraClient) {
         const headTag = new Tag(rawHeadTag);
         const tags = await githubClient.listSemVerTags(true);
         const baseTag = Tag.getPreviousTag(tags, headTag);
+        // eslint-disable-next-line no-console
+        console.log('baseTag', baseTag);
+        // eslint-disable-next-line no-console
+        console.log('headTag', headTag);
         const commits = await githubClient.compareTags(baseTag, headTag);
         const changeLog = commits
             .map((commit) => {
