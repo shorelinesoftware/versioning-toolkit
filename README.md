@@ -8,10 +8,12 @@ This action provides a set of helpers for semantic versioning:
 
 1) Auto increment patch version
 2) Make prerelease tag
+3) Make release
+4) Add Tag to Jira issues
 
 # Auto increment patch version
 
-Finds the latest tag by branch name and increments is patch segment. If there are no previous tags that match the branch, the default tag will be created: {branch}-0.0.1
+Finds the latest tag by branch name and increments is patch segment. If there are no previous tags that match the branch, the default tag will be created: {branch}-0.0.1.
 
 ## Inputs 
 
@@ -20,15 +22,15 @@ Finds the latest tag by branch name and increments is patch segment. If there ar
 **Required**. The filter to find tag with the highest version by provided prefix.  
 For example:
 If there are these tags: master-0.0.1, master-0.0.2, release-1.0.0, release-1.0.1, release-1.0.2 and provided prefix is `release-1.0` then the new tag will be release-1.0.2.  
-If there are no tags that match the prefix the tag will be `{prefix}-0.0.1`
+If there are no tags that match the prefix the tag will be `{prefix}-0.0.1`.
 
 ### `actionName`
 
-**Required**. The name of the method. Must be **autoIncrementPatch**
+**Required**. The name of the method. Must be **autoIncrementPatch**.
 
 ### `push`
 
-**Optional**. Whether to push new tag or not. Must be **'true' or 'false'**. 'false' by default
+**Optional**. Whether to push new tag or not. Must be **'true' or 'false'**. 'false' by default.
 
 ## Usage:
 
@@ -58,7 +60,7 @@ Makes prerelease tag with the provided prefix. Uses short commit sha as prerelea
 
 ### `actionName`
 
-**Required**. The name of the method. Must be **makePrerelease**
+**Required**. The name of the method. Must be **makePrerelease**.
 
 ### `prefix`
 
@@ -66,7 +68,7 @@ Makes prerelease tag with the provided prefix. Uses short commit sha as prerelea
 
 ### `push`
 
-**Optional**. Whether to push new tag or not. Must be **'true' or 'false'**. 'false' by default
+**Optional**. Whether to push new tag or not. Must be **'true' or 'false'**. 'false' by default.
 
 ## Outputs
 
@@ -87,13 +89,13 @@ with:
 
 # make release
 
-Creates release branch, updates main tag and pushes new release tag
+Creates release branch, updates main tag and pushes new release tag.
 ## Inputs
 
 
 ### `actionName`
 
-**Required**. The name of the method. Must be **makeRelease**
+**Required**. The name of the method. Must be **makeRelease**.
 
 ### `releasePrefix`
 
@@ -105,12 +107,12 @@ Creates release branch, updates main tag and pushes new release tag
 
 ### `push`
 
-**Optional**. Whether to push changes to repository or not. Must be **'true' or 'false'**. 'false' by default
+**Optional**. Whether to push changes to repository or not. Must be **'true' or 'false'**. 'false' by default.
 
 ### `majorSegment`
 
 **Optional**. New major segment for the main and release tags and release branch.  
-Zeroes minor segment if provided without minor segment and its value is higher than actual major segment
+Zeroes minor segment if provided without minor segment and its value is higher than actual major segment.
 
 ### `minorSegment`
 
@@ -136,4 +138,54 @@ with:
     minorSegment: 1
     actionName: makeRelease
     push: true
+```
+
+# add tag to Jira issues
+
+It gets commits diff between provided tag and the previous tag, parses commits identifying Jira keys and adds tag and fix version created from tag (e.g if tag is master-2.2.0 then fix version will be master-2.2) to each Jira key using provided Jira Tag field name.
+## Inputs
+
+
+### `actionName`
+
+**Required**. The name of the method. Must be **addTagToJiraIssues**.
+
+### `jiraTagFieldName`
+
+**Required**. Field name in Jira to where tag is added.
+
+### `tag`
+
+**Required**. The tag that will be added to each Jira issue.
+
+### `jiraUserEmail`
+
+**Required**. Jira user email used to access Jira.
+
+### `jiraApiToken`
+
+**Required**. Jira Api token used to access Jira.
+
+### `jiraOrgOrigin`
+
+**Required**. Jira organization origin.  
+
+## Outputs
+
+This action has no output.
+
+
+## Usage:
+
+```yaml
+uses: shorelinesoftware/versioning-toolkit@v0.0.1
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+with:
+  tag: main-3.1.103
+  jiraTagFieldName: "Release tag"
+  jiraOrgOrigin: "https://foo.atlassian.net"
+  jiraUserEmail: ${{ secrets.JIRA_USER_EMAIL }}
+  jiraApiToken: ${{ secrets.JIRA_API_TOKEN }}
+  actionName: 'addTagToJiraIssues'
 ```
