@@ -50,7 +50,7 @@ export async function addTagToJiraIssues({
     (key) => !result.updatedIssues.includes(key),
   );
   if (notUpdatedIssues.length !== 0) {
-    info(`issues that were not updated: ${notUpdatedIssues.join(',')}`);
+    info(`issues that were not updated: ${notUpdatedIssues.join(', ')}`);
   }
-  info(`updated issues: ${result.updatedIssues.join(',')}`);
+  info(`updated issues: ${result.updatedIssues.join(', ')}`);
 }

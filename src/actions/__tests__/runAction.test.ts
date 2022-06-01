@@ -1,13 +1,15 @@
 import { Tag } from '../../models/Tag';
+import { AddTagToJiraIssuesParams } from '../../services/addTagToJiraIssues';
 import { MakeReleaseParams } from '../../services/makeRelease';
 import { Inputs } from '../../types';
 import { runAction } from '../actionRunner';
-import { assertGetInputIsCalled, assertSingleActionIsCalled } from './helpers';
+import { assertGetInputIsCalled } from './helpers';
 import {
   mockedActionAdapter,
   mockedGithubClient,
   mockedJiraClient,
   mockedServiceLocator,
+  mockedAddTagToJiraIssues,
 } from './mocks';
 
 async function executeAction() {
@@ -96,7 +98,6 @@ describe('run action', () => {
       });
       assertGetInputIsCalled(Inputs.prefix, { required: true });
       assertGetInputIsCalled(Inputs.push);
-      assertSingleActionIsCalled('autoIncrementPatch');
     });
 
     it('makePrerelease', async () => {
@@ -126,7 +127,6 @@ describe('run action', () => {
       });
       assertGetInputIsCalled(Inputs.prefix, { required: true });
       assertGetInputIsCalled(Inputs.push);
-      assertSingleActionIsCalled('makePrerelease');
     });
 
     it('makeRelease', async () => {
@@ -179,7 +179,38 @@ describe('run action', () => {
       });
       assertGetInputIsCalled(Inputs.minorSegment);
       assertGetInputIsCalled(Inputs.majorSegment);
-      assertSingleActionIsCalled('makeRelease');
+    });
+
+    it('addTagToJiraIssues', async () => {
+      const tag = 'master-1.0.0';
+      const jiraTagFieldName = 'foo';
+      const jiraUserEmail = 'foo@bar.com';
+      const jiraApiToken = '123';
+      const jiraOrgOrigin = 'foo.atlassian.net';
+      mockedActionAdapter.getInput.mockImplementation((name) => {
+        switch (name as Inputs) {
+          case Inputs.actionName:
+            return 'addTagToJiraIssues';
+          case Inputs.jiraApiToken:
+            return jiraApiToken;
+          case Inputs.jiraUserEmail:
+            return jiraUserEmail;
+          case Inputs.jiraTagFieldName:
+            return jiraTagFieldName;
+          case Inputs.jiraOrgOrigin:
+            return jiraOrgOrigin;
+          case Inputs.tag:
+            return tag;
+          default:
+            throw new Error('Input not found');
+        }
+      });
+      await executeAction();
+      const params: AddTagToJiraIssuesParams = {
+        rawTag: tag,
+        tagFieldName: jiraTagFieldName,
+      };
+      expect(mockedAddTagToJiraIssues).toHaveBeenCalledWith(params);
     });
   });
 });

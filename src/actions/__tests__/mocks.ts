@@ -22,12 +22,18 @@ export const mockedJiraClient: Mocked<IJiraClient> = {
   getCustomFields: jest.fn(),
 };
 
+export const mockedAddTagToJiraIssues = jest.fn();
+export const mockedGenerateChangelog = jest.fn();
 export const mockedServiceLocator: Mocked<ServiceLocator> = {
   autoIncrementPatch: jest.fn(),
   makePrerelease: jest.fn(),
   makeRelease: jest.fn(),
-  addTagToJiraIssuesBuilder: jest.fn(),
-  generateChangelogBuilder: jest.fn(),
+  addTagToJiraIssuesBuilder: jest.fn(
+    (_generateChangelog, _jiraClient, _info) => mockedAddTagToJiraIssues,
+  ),
+  generateChangelogBuilder: jest.fn(
+    (_githubClient, _jiraClient) => mockedGenerateChangelog,
+  ),
 };
 
 export const mockedActionAdapter: Mocked<ActionAdapter> = {
