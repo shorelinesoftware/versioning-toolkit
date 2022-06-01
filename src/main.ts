@@ -1,10 +1,10 @@
 import { getActionAdapter } from './actions/actionAdapter';
-import { runAction, Actions } from './actions/actionRunner';
-import { autoIncrementPatch } from './actions/autoIncrementPatch';
-import { makePrerelease } from './actions/makePrerelease';
-import { makeRelease } from './actions/makeRelease';
+import { runAction } from './actions/actionRunner';
 import { getGithubAdapter } from './github/gihubAdapter';
 import { GithubClient } from './github/GithubClient';
+import { JiraClient } from './jira/JiraClient';
+import { JiraUser } from './jira/types';
+import { getServiceLocator } from './services/serviceLocator';
 
 async function run() {
   const actionAdapter = getActionAdapter();
@@ -13,18 +13,14 @@ async function run() {
     if (githubToken == null) {
       throw new Error('GITHUB_TOKEN is not provided');
     }
-    const githubClient = new GithubClient(getGithubAdapter(githubToken));
-
-    const actionDictionary: Actions = {
-      autoIncrementPatch,
-      makePrerelease,
-      makeRelease,
-    };
 
     await runAction({
-      githubClient,
+      githubToken,
       actionAdapter,
-      actions: actionDictionary,
+      getJiraClient: (jiraUser: JiraUser, orgOrigin: string) =>
+        new JiraClient(jiraUser, orgOrigin),
+      getGithubClient: (token) => new GithubClient(getGithubAdapter(token)),
+      getServiceLocator,
     });
   } catch (e) {
     if (e instanceof Error) {

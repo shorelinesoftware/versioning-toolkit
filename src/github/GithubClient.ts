@@ -1,5 +1,6 @@
 import { Tag } from '../models/Tag';
-import { GithubAdapter, GithubTag } from './types';
+import { fetchPages } from '../utils';
+import { Commit, GithubAdapter, GithubTag } from './types';
 import { isNotFoundError } from './utils';
 
 export interface IGithubClient {
@@ -17,6 +18,8 @@ export interface IGithubClient {
   checkBranchExists: (branch: string) => Promise<boolean>;
 
   getTag: (tag: string) => Promise<GithubTag | undefined>;
+
+  compareTags: (baseTag: Tag, headTag: Tag) => Promise<Commit[]>;
 }
 
 export class GithubClient implements IGithubClient {
@@ -26,10 +29,32 @@ export class GithubClient implements IGithubClient {
     this._githubAdapter = githubAdapter;
   }
 
-  async listSemVerTags(shouldFetchAllTags = true, page = 1) {
-    return this._listSemVerTags(shouldFetchAllTags, [], page).then(
-      (tags) => tags ?? [],
-    );
+  async listSemVerTags(shouldFetchAllTags = true) {
+    return fetchPages({
+      shouldFetchAll: shouldFetchAllTags,
+      fetchFn: async ({ page, perPage }) =>
+        this._githubAdapter.listTags({
+          per_page: perPage,
+          page,
+        }),
+    }).then((tags) => {
+      return tags
+        .map((tag) => Tag.parse(tag.name))
+        .filter((tag): tag is Tag => tag != null);
+    });
+  }
+
+  async compareTags(baseTag: Tag, headTag: Tag) {
+    return fetchPages({
+      shouldFetchAll: true,
+      fetchFn: async ({ perPage, page }) =>
+        this._githubAdapter.compareRefs({
+          per_page: perPage,
+          page,
+          headRef: headTag.value,
+          baseRef: baseTag.value,
+        }),
+    });
   }
 
   async createBranch(branchName: string, sha: string) {
@@ -81,30 +106,5 @@ export class GithubClient implements IGithubClient {
         }
         throw error;
       });
-  }
-
-  private async _listSemVerTags(
-    shouldFetchAllTags = false,
-    fetchedTags: Tag[] = [],
-    page = 1,
-  ): Promise<Tag[]> {
-    const perPage = 100;
-
-    const tagsResponse = await this._githubAdapter.listTags({
-      per_page: perPage,
-      page,
-    });
-    const tags = tagsResponse
-      .map((tag) => Tag.parse(tag.name))
-      .filter((tag): tag is Tag => tag != null);
-    if (tagsResponse.length < perPage || !shouldFetchAllTags) {
-      return [...fetchedTags, ...tags];
-    }
-
-    return this._listSemVerTags(
-      shouldFetchAllTags,
-      [...fetchedTags, ...tags],
-      page + 1,
-    );
   }
 }

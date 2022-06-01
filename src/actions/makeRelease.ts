@@ -1,96 +1,44 @@
 import { IGithubClient } from '../github/GithubClient';
-import { Tag } from '../models/Tag';
+import { MakeRelease } from '../services/makeRelease';
+import { Inputs } from '../types';
+import { ActionAdapter } from './actionAdapter';
 
 export type MakeReleaseParams = {
   githubClient: IGithubClient;
-  rowMajorSegment?: string;
-  rowMinorSegment?: string;
-  releasePrefix: string;
-  rowMainTag: string;
-  push: boolean;
+  actionAdapter: ActionAdapter;
+  makeReleaseService: MakeRelease;
 };
 
-function parseSegment(segment: string | undefined) {
-  if (!segment) {
-    return undefined;
-  }
-  return Number.parseInt(segment, 10);
-}
-
-function checkSegment(segment: number | undefined) {
-  if (Number.isNaN(segment)) {
-    throw new Error('Minor or major segment can not be parsed');
-  }
-}
-
-export type MakeRelease = typeof makeRelease;
-
 export async function makeRelease({
-  releasePrefix,
+  actionAdapter,
   githubClient,
-  rowMainTag,
-  rowMajorSegment,
-  rowMinorSegment,
-  push,
+  makeReleaseService,
 }: MakeReleaseParams) {
-  if (!releasePrefix) {
-    throw new Error('missing releasePrefix');
-  }
+  const { getInput, info, setOutput } = actionAdapter;
 
-  if (!rowMainTag) {
-    throw new Error('missing rowMainTag');
-  }
-  const minorSegment = parseSegment(rowMinorSegment);
-
-  checkSegment(minorSegment);
-
-  const majorSegment = parseSegment(rowMajorSegment);
-
-  checkSegment(majorSegment);
-
-  const mainTag = await githubClient.getTag(rowMainTag);
-  if (mainTag == null) {
-    throw new Error(`Can not find tag ${rowMainTag} in repository`);
-  }
-  const { value: mainTagValue, sha } = mainTag;
-
-  let newMinorSegment = minorSegment ?? mainTagValue.minorSegment;
-  if (
-    minorSegment == null &&
-    majorSegment != null &&
-    majorSegment > mainTagValue.majorSegment
-  ) {
-    newMinorSegment = 0;
-  }
-
-  const newReleaseTag = new Tag({
-    prefix: releasePrefix,
-    version: {
-      major: majorSegment ?? mainTagValue.majorSegment,
-      minor: newMinorSegment,
-      patch: 0,
-    },
+  const releasePrefix = getInput(Inputs.releasePrefix, {
+    required: true,
   });
-
-  const newMainTag = new Tag({
-    prefix: mainTagValue.prefix,
-    version: {
-      major: majorSegment ?? mainTagValue.majorSegment,
-      minor: newMinorSegment + 1,
-      patch: 0,
-    },
+  const mainTag = getInput(Inputs.tag, { required: true });
+  const minorSegment = getInput(Inputs.minorSegment);
+  const majorSegment = getInput(Inputs.majorSegment);
+  const push = getInput(Inputs.push) === 'true';
+  const release = await makeReleaseService({
+    releasePrefix,
+    githubClient,
+    rowMainTag: mainTag,
+    rowMajorSegment: majorSegment,
+    rowMinorSegment: minorSegment,
+    push,
   });
-
-  const newReleaseBranch = newReleaseTag.createBranch();
+  info(`new release tag ${release.newReleaseTag}`);
+  info(`new release branch ${release.newReleaseBranch}`);
+  info(`new main tag ${release.newMainTag}`);
   if (push) {
-    await githubClient.createTag(newReleaseTag, sha);
-    await githubClient.createTag(newMainTag, sha);
-    await githubClient.createBranch(newReleaseBranch, sha);
+    info(`changes pushed to repository`);
   }
-
-  return {
-    newReleaseTag,
-    newMainTag,
-    newReleaseBranch,
-  };
+  setOutput('NEW_RELEASE_TAG', release.newReleaseTag.value);
+  setOutput('NEW_RELEASE_BRANCH', release.newReleaseBranch);
+  setOutput('NEW_MAIN_TAG', release.newMainTag.value);
+  return;
 }

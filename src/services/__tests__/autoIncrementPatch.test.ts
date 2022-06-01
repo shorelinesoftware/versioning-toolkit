@@ -30,6 +30,7 @@ describe('autoIncrementPatch', () => {
     deleteBranch: jest.fn<Promise<boolean>, [string]>(),
     checkBranchExists: jest.fn<Promise<boolean>, [string]>(),
     getTag: jest.fn<Promise<GithubTag>, [string]>(),
+    compareTags: jest.fn(async (_baseTag, _headTag) => Promise.resolve([])),
   };
 
   const sha = '123';

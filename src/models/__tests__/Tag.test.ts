@@ -197,22 +197,22 @@ describe('Tag', () => {
 
   describe('getHighestTagOrDefault', () => {
     it('should return default tag by prefix', () => {
-      const tag = Tag.getHighestTagOrDefaultWithPrefix(tags, 'feature');
+      const tag = Tag.getHighestTagWithPrefixOrDefault(tags, 'feature');
       expect(tag?.value).toBe('feature-0.0.0');
     });
     it('should return default tag if no tags found', () => {
-      const tag = Tag.getHighestTagOrDefaultWithPrefix(
+      const tag = Tag.getHighestTagWithPrefixOrDefault(
         tags,
         new Tag('feature-1.0.1'),
       );
       expect(tag?.value).toBe('feature-1.0.1');
     });
     it('should return tag with the highest version', () => {
-      const tag = Tag.getHighestTagOrDefaultWithPrefix(tags);
+      const tag = Tag.getHighestTagWithPrefixOrDefault(tags);
       expect(tag?.value).toBe('stable-2.3.1');
     });
     it('should return undefined if no tags and prefix', () => {
-      const tag = Tag.getHighestTagOrDefaultWithPrefix([]);
+      const tag = Tag.getHighestTagWithPrefixOrDefault([]);
       expect(tag).toBe(undefined);
     });
   });
@@ -286,6 +286,24 @@ describe('Tag', () => {
     });
     it('returns prerelease segment of tag', () => {
       expect(tag.prereleaseSegment).toBe(prerelease);
+    });
+  });
+
+  describe('getPreviousTag', () => {
+    it('returns tag with patch -1', () => {
+      expect(Tag.getPreviousTag(tags, new Tag('stable-2.3.1'))?.value).toBe(
+        'stable-2.3.0',
+      );
+    });
+    it('returns tag with minor - 1', () => {
+      expect(Tag.getPreviousTag(tags, new Tag('stable-2.2.0'))?.value).toBe(
+        'stable-2.1.0',
+      );
+    });
+    it('returns tag with major - 1', () => {
+      expect(Tag.getPreviousTag(tags, new Tag('stable-2.0.0'))?.value).toBe(
+        'stable-1.0.0',
+      );
     });
   });
 });

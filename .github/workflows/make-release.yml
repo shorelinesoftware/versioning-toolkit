@@ -14,7 +14,7 @@ on:
       minorSegment:
         description: 'minor segment of the tag'
         required: false
-      mainTag:
+      tag:
         description: 'tag from which release is created'
         required: true
       releasePrefix:

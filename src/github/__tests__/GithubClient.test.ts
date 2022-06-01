@@ -1,27 +1,40 @@
 import { Tag } from '../../models/Tag';
 import { Mocked } from '../../testUtils';
 import { GithubClient } from '../GithubClient';
-import { GithubAdapter, ListTagsResponse, RefResponse } from '../types';
+import {
+  GithubAdapter,
+  ListTagsResponse,
+  RefResponse,
+  Commit,
+  ListRequestParams,
+} from '../types';
 
 const PER_PAGE = 100;
 const TOTAL_TAGS = PER_PAGE * 2;
+const TOTAL_COMMITS = PER_PAGE * 2;
+
+function paginate<TListItem, TRequestParams extends ListRequestParams>(
+  list: TListItem[],
+) {
+  return async ({ page = 1, per_page }: TRequestParams) => {
+    if (per_page == null) {
+      return Promise.resolve(list);
+    }
+    return Promise.resolve(list.slice(page * per_page, (page + 1) * per_page));
+  };
+}
 
 function createMockGithubAdapter(
   tags: ListTagsResponse,
+  commits: Commit[],
 ): Mocked<GithubAdapter> {
   return {
-    listTags: jest.fn(async ({ page = 1, per_page }) => {
-      if (per_page == null) {
-        return Promise.resolve(tags);
-      }
-      return Promise.resolve(
-        tags.slice((page - 1) * per_page, page * per_page),
-      );
-    }),
+    listTags: jest.fn(paginate(tags)),
     createRef: jest.fn<Promise<void>, [string, string]>(),
     getBranch: jest.fn<Promise<string>, [string]>(),
     deleteRef: jest.fn<Promise<void>, [string]>(),
     getRef: jest.fn<Promise<RefResponse>, [string]>(),
+    compareRefs: jest.fn(paginate(commits)),
   };
 }
 
@@ -42,27 +55,45 @@ const defaultTags = [
   },
 ];
 
+const defaultCommits: Commit[] = [
+  ...[...new Array(TOTAL_TAGS).keys()].map((_, index) => ({
+    sha: `sha-${index}`,
+    message: `commit-${index}`,
+  })),
+];
+
 describe('GithubClient', () => {
-  const mockedGithubAdapter = createMockGithubAdapter(defaultTags);
+  const mockedGithubAdapter = createMockGithubAdapter(
+    defaultTags,
+    defaultCommits,
+  );
   const githubClient = new GithubClient(mockedGithubAdapter);
   describe('listSemVerTags', () => {
-    it('should load first page', async () => {
+    it('should load first page only', async () => {
       const tags = await githubClient.listSemVerTags(false);
       expect(tags.length).toBe(PER_PAGE);
       expect(tags[PER_PAGE - 1].value).toBe(`master-0.0.${PER_PAGE - 1}`);
-    });
-    it('should load second page', async () => {
-      const tags = await githubClient.listSemVerTags(false, 2);
-      expect(tags.length).toBe(PER_PAGE);
-      expect(tags[PER_PAGE - 1].value).toBe(`master-0.0.${TOTAL_TAGS - 1}`);
     });
     it('should load all tags', async () => {
       const tags = await githubClient.listSemVerTags(true);
       expect(tags.length).toBe(TOTAL_TAGS);
     });
+    it('should load all tags by default', async () => {
+      const tags = await githubClient.listSemVerTags();
+      expect(tags.length).toBe(TOTAL_TAGS);
+    });
     it('should filter out bad tags', async () => {
       const tags = await githubClient.listSemVerTags(true);
       expect(tags.every((t) => t != null)).toBe(true);
+    });
+  });
+  describe('compareTags', () => {
+    it('should load all commits', async () => {
+      const commits = await githubClient.compareTags(
+        new Tag('master-0.0.1'),
+        new Tag('master-0.0.2'),
+      );
+      expect(commits.length).toBe(TOTAL_COMMITS);
     });
   });
   describe('createTag', () => {
