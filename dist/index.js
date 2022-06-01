@@ -20668,12 +20668,18 @@ function checkIsStringArray(field) {
 function addTagToJiraIssuesBuilder(generateChangelogService, jiraClient, info) {
     return async ({ rawTag, tagFieldName }) => {
         const tag = new Tag(rawTag);
+        // eslint-disable-next-line no-console
+        console.log('tag', tag.value);
         const changelog = await generateChangelogService({ rawHeadTag: tag.value });
+        // eslint-disable-next-line no-console
+        console.log('changelog', JSON.stringify(changelog, undefined, 2));
         const issuesKeys = changelog
             .filter((item) => item.existsInJira)
             .map((item) => item.issueKey)
             .filter((item) => item != null);
         const issues = await jiraClient.getIssuesByKeys(issuesKeys);
+        // eslint-disable-next-line no-console
+        console.log('issues', tag.value);
         const foundIssueKeys = issues.map((i) => i.key);
         const fields = await jiraClient.getCustomFields();
         const tagField = fields.find((field) => field.name.toLowerCase() === tagFieldName.toLowerCase());
