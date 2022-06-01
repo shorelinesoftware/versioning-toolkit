@@ -17,7 +17,7 @@ describe('addTagToJiraIssues', () => {
     id: 1,
     key: 'FOO-1',
     fields: {
-      issueType: {
+      issuetype: {
         id: 1,
         name: '1',
       },
@@ -29,7 +29,7 @@ describe('addTagToJiraIssues', () => {
     id: 2,
     key: 'FOO-2',
     fields: {
-      issueType: {
+      issuetype: {
         id: 2,
         name: '2',
       },
@@ -73,10 +73,11 @@ describe('addTagToJiraIssues', () => {
 
   const generateChangelog: GenerateChangelog = async () =>
     Promise.resolve([changelog1, changelog2, changelog3]);
+  const info = jest.fn();
   const addTagToJiraIssues = addTagToJiraIssuesBuilder(
     generateChangelog,
     mockedJiraClient,
-    () => {},
+    info,
   );
   it('adds tag to all existed issues', async () => {
     const expectedResult = {
@@ -108,7 +109,7 @@ describe('addTagToJiraIssues', () => {
         {
           ...issue2,
           fields: {
-            issueType: {
+            issuetype: {
               id: 2,
               name: '2',
             },
@@ -128,14 +129,56 @@ describe('addTagToJiraIssues', () => {
   });
 
   it('appends existed tags when updates issue', async () => {
+    const expectErrors: unknown[] = [];
     mockedJiraClient.updateIssue.mockImplementationOnce(async (updates) => {
-      expect(updates.fields[tagFieldName]).toEqual([...tags, tag]);
+      try {
+        expect(updates.fields[tagFieldName]).toEqual([...tags, tag]);
+      } catch (e) {
+        expectErrors.push(e);
+      }
       return Promise.resolve();
     });
     await addTagToJiraIssues({
       tagFieldName,
       rawTag: tag,
     });
+    for (const expectError of expectErrors) {
+      throw expectError;
+    }
+  });
+  it('removes duplicated tags when updates issue', async () => {
+    mockedJiraClient.getIssuesByKeys.mockReturnValueOnce(
+      Promise.resolve([
+        {
+          id: 1,
+          key: '1',
+          fields: {
+            issuetype: {
+              id: 2,
+              name: '2',
+            },
+            summary: '2',
+            [tagFieldName]: [tag],
+          },
+        },
+      ]),
+    );
+    const expectErrors: unknown[] = [];
+    mockedJiraClient.updateIssue.mockImplementationOnce(async (updates) => {
+      try {
+        expect(updates.fields[tagFieldName]).toEqual([tag]);
+      } catch (e) {
+        expectErrors.push(e);
+      }
+      return Promise.resolve();
+    });
+    await addTagToJiraIssues({
+      tagFieldName,
+      rawTag: tag,
+    });
+    for (const expectError of expectErrors) {
+      throw expectError;
+    }
   });
   it('returns empty array if tagField can not be found', async () => {
     mockedJiraClient.getCustomFields.mockReturnValueOnce(Promise.resolve([]));
@@ -174,7 +217,7 @@ describe('addTagToJiraIssues', () => {
       allIssues: [issue1.key],
     });
   });
-  it('does not throw exception if issue can not be updated', async () => {
+  it('does not throw exception if and infos if issue can not be updated', async () => {
     mockedJiraClient.updateIssue.mockRejectedValueOnce(new Error());
 
     const result = await addTagToJiraIssues({
@@ -185,6 +228,7 @@ describe('addTagToJiraIssues', () => {
       updatedIssues: [issue2.key],
       allIssues: [issue1.key, issue2.key],
     });
+    expect(info).toHaveBeenCalledTimes(1);
   });
   it('throws exception if raw tag can not be parsed', async () => {
     await expect(async () =>

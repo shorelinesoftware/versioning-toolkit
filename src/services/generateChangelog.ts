@@ -56,7 +56,7 @@ export function generateChangelogBuilder(
       if (issue != null) {
         changelogItem.summary = issue.fields.summary;
         changelogItem.existsInJira = true;
-        changelogItem.type = issue.fields.issueType.name;
+        changelogItem.type = issue.fields.issuetype.name;
       }
     }
     return Object.values(

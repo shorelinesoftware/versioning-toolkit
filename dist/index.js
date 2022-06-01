@@ -20549,19 +20549,26 @@ var axios = __nccwpck_require__(6545);
 var axios_default = /*#__PURE__*/__nccwpck_require__.n(axios);
 ;// CONCATENATED MODULE: ./lib/jira/JiraRequestError.js
 class JiraRequestError extends Error {
-    status;
-    errors;
-    headers;
-    constructor(error) {
-        const axiosError = error;
-        if (axiosError.isAxiosError) {
-            super(axiosError.message);
-            this.status = axiosError.response?.status ?? 0;
-            this.errors = axiosError.response?.data;
-            this.headers = axiosError.response?.headers;
-            return;
-        }
-        throw error;
+    code;
+    response;
+    request;
+    constructor(message, code, response, request) {
+        super(message);
+        this.code = code;
+        this.response = response;
+        this.request = request;
+        this.name = 'JiraRequestError';
+    }
+    toString() {
+        return (`message: ${this.message}` +
+            `\n` +
+            `code: ${this.code}` +
+            '\n' +
+            `status: ${this.response?.status}` +
+            '\n' +
+            `data: ${JSON.stringify(this.response?.data, undefined, 2)}` +
+            `\n` +
+            `request: ${JSON.stringify(this.request, undefined, 2)}`);
     }
 }
 
@@ -20597,7 +20604,17 @@ class JiraClient {
             return response.data;
         }
         catch (e) {
-            throw new JiraRequestError(e);
+            if (axios_default().isAxiosError(e)) {
+                throw new JiraRequestError(e.message, e.code, e.response != null
+                    ? {
+                        headers: e.response.headers,
+                        data: e.response.data,
+                        status: e.response.status,
+                        statusText: e.response.statusText,
+                    }
+                    : undefined, e.request);
+            }
+            throw e;
         }
     }
     async updateIssue(issueFieldUpdates, issueKey) {
@@ -20621,6 +20638,9 @@ class JiraClient {
                 startAt: page,
             };
         };
+        if (keys.length === 0) {
+            return [];
+        }
         return fetchPages({
             shouldFetchAll: true,
             fetchFn: async (listRequestParams) => {
@@ -20636,6 +20656,7 @@ class JiraClient {
 }
 
 ;// CONCATENATED MODULE: ./lib/services/addTagToJiraIssues.js
+
 
 function checkIsStringArray(field) {
     return (Array.isArray(field) && field.every((item) => typeof item === 'string'));
@@ -20659,21 +20680,24 @@ function addTagToJiraIssuesBuilder(generateChangelogService, jiraClient, info) {
             };
         }
         const updatedIssues = [];
-        await Promise.all(issues.map((issue) => {
-            const prevTags = issue.fields[tagField.name];
+        await Promise.all(issues.map(async (issue) => {
+            const prevTags = issue.fields[tagField.name] ?? [];
             if (!checkIsStringArray(prevTags)) {
                 return;
             }
-            return jiraClient
-                .updateIssue({
-                fields: {
-                    [tagField.name]: [...prevTags, tag.value],
-                },
-            }, issue.key)
-                .then(() => updatedIssues.push(issue.key))
-                .catch((error) => {
-                info(error.toString());
-            });
+            try {
+                await jiraClient.updateIssue({
+                    fields: {
+                        [tagField.id]: unique([...prevTags, tag.value]),
+                    },
+                }, issue.key);
+                updatedIssues.push(issue.key);
+            }
+            catch (e) {
+                if (e instanceof Error) {
+                    info(e.toString());
+                }
+            }
         }));
         return {
             updatedIssues,
@@ -20736,7 +20760,7 @@ function generateChangelogBuilder(githubClient, jiraClient) {
             if (issue != null) {
                 changelogItem.summary = issue.fields.summary;
                 changelogItem.existsInJira = true;
-                changelogItem.type = issue.fields.issueType.name;
+                changelogItem.type = issue.fields.issuetype.name;
             }
         }
         return Object.values(changeLog.reduce((a, c) => {

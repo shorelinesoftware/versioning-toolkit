@@ -1,5 +1,6 @@
 import { IJiraClient } from '../jira/types';
 import { Tag } from '../models/Tag';
+import { unique } from '../utils';
 import { GenerateChangelog } from './generateChangelog';
 
 export type AddTagToJiraIssuesParams = {
@@ -46,24 +47,26 @@ export function addTagToJiraIssuesBuilder(
     }
     const updatedIssues: string[] = [];
     await Promise.all(
-      issues.map((issue) => {
-        const prevTags = issue.fields[tagField.name];
+      issues.map(async (issue) => {
+        const prevTags = issue.fields[tagField.name] ?? [];
         if (!checkIsStringArray(prevTags)) {
           return;
         }
-        return jiraClient
-          .updateIssue(
+        try {
+          await jiraClient.updateIssue(
             {
               fields: {
-                [tagField.name]: [...prevTags, tag.value],
+                [tagField.id]: unique([...prevTags, tag.value]),
               },
             },
             issue.key,
-          )
-          .then(() => updatedIssues.push(issue.key))
-          .catch((error) => {
-            info(error.toString());
-          });
+          );
+          updatedIssues.push(issue.key);
+        } catch (e) {
+          if (e instanceof Error) {
+            info(e.toString());
+          }
+        }
       }),
     );
     return {

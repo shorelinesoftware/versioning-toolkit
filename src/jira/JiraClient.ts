@@ -53,7 +53,22 @@ export class JiraClient implements IJiraClient {
       });
       return response.data as TResponse;
     } catch (e) {
-      throw new JiraRequestError(e);
+      if (axios.isAxiosError(e)) {
+        throw new JiraRequestError(
+          e.message,
+          e.code,
+          e.response != null
+            ? {
+                headers: e.response.headers,
+                data: e.response.data,
+                status: e.response.status,
+                statusText: e.response.statusText,
+              }
+            : undefined,
+          e.request,
+        );
+      }
+      throw e;
     }
   }
 
@@ -83,6 +98,9 @@ export class JiraClient implements IJiraClient {
         startAt: page,
       };
     };
+    if (keys.length === 0) {
+      return [];
+    }
     return fetchPages({
       shouldFetchAll: true,
       fetchFn: async (listRequestParams) => {

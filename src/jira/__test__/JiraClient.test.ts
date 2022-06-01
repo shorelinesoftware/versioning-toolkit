@@ -51,7 +51,7 @@ describe('JiraClient', () => {
           key: 'FOO-1',
           fields: {
             summary: '',
-            issueType: {
+            issuetype: {
               id: 1,
               name: '',
             },
@@ -62,7 +62,7 @@ describe('JiraClient', () => {
           key: 'FOO-2',
           fields: {
             summary: '',
-            issueType: {
+            issuetype: {
               id: 1,
               name: '',
             },
@@ -93,6 +93,10 @@ describe('JiraClient', () => {
         .reply(200, searchResponse);
       const result = await jiraClient.getIssuesByKeys(['FOO-1', 'FOO-2']);
       expect(result).toEqual(searchResponse.issues);
+    });
+    it('returns empty array if issueKeys are empty', async () => {
+      const result = await jiraClient.getIssuesByKeys([]);
+      expect(result).toEqual([]);
     });
   });
   describe('getCustomFields', () => {
@@ -142,7 +146,7 @@ describe('JiraClient', () => {
       await jiraClient.updateIssue(issueFieldUpdates, issueKey);
     });
   });
-  it('rethrows JiraRequestError', async () => {
+  it('rethrows JiraRequestError if AxiosError', async () => {
     axiosMock.onAny().reply(400);
     await expect(async () =>
       jiraClient.getCustomFields(),

@@ -40,7 +40,7 @@ export type Issue = {
   id: number;
   key: string;
   fields: {
-    issueType: {
+    issuetype: {
       id: number;
       name: string;
     };
