@@ -1,12 +1,14 @@
+import { AddTagToJiraIssuesParams } from '../../services/addTagToJiraIssues';
 import { AssertToHaveBeenAnyNthCalledWithParams } from '../../testUtils';
 import { Inputs } from '../../types';
 import { addTagToJiraIssues } from '../addTagToJiraIssues';
+import { GetJiraClient } from '../types';
 import { assertGetInputIsCalled } from './helpers';
 import {
+  getMockedJiraClient,
   mockedActionAdapter,
   mockedAddTagToJiraIssues,
   mockedGithubClient,
-  mockedJiraClient,
   mockedServiceLocator,
 } from './mocks';
 
@@ -16,6 +18,7 @@ describe('run addTagToJiraIssues', () => {
   const jiraUserEmail = 'foo@bar.com';
   const jiraApiToken = '123';
   const jiraOrgOrigin = 'foo.atlassian.net';
+  const prefix = 'bar';
   mockedActionAdapter.getInput.mockImplementation((name) => {
     switch (name as Inputs) {
       case Inputs.actionName:
@@ -30,6 +33,8 @@ describe('run addTagToJiraIssues', () => {
         return jiraOrgOrigin;
       case Inputs.tag:
         return tag;
+      case Inputs.prefix:
+        return prefix;
       default:
         throw new Error('Input not found');
     }
@@ -43,11 +48,24 @@ describe('run addTagToJiraIssues', () => {
     await addTagToJiraIssues({
       actionAdapter: mockedActionAdapter,
       githubClient: mockedGithubClient,
-      getJiraClient: () => mockedJiraClient,
+      getJiraClient: getMockedJiraClient,
       addTagToJiraIssuesBuilder: mockedServiceLocator.addTagToJiraIssuesBuilder,
       generateChangelogBuilder: mockedServiceLocator.generateChangelogBuilder,
     });
-
+    expect(mockedAddTagToJiraIssues).toHaveBeenCalledWith<
+      [AddTagToJiraIssuesParams]
+    >({
+      rawTag: tag,
+      tagFieldName: jiraTagFieldName,
+      prefix,
+    });
+    expect(getMockedJiraClient).toHaveBeenCalledWith<Parameters<GetJiraClient>>(
+      {
+        email: jiraUserEmail,
+        token: jiraApiToken,
+      },
+      jiraOrgOrigin,
+    );
     assertGetInputIsCalled(Inputs.jiraApiToken, {
       required: true,
     });
@@ -63,6 +81,7 @@ describe('run addTagToJiraIssues', () => {
     assertGetInputIsCalled(Inputs.jiraOrgOrigin, {
       required: true,
     });
+    assertGetInputIsCalled(Inputs.prefix);
   });
   it('and outputs not updated issues', async () => {
     mockedAddTagToJiraIssues.mockResolvedValueOnce({
@@ -72,7 +91,7 @@ describe('run addTagToJiraIssues', () => {
     await addTagToJiraIssues({
       actionAdapter: mockedActionAdapter,
       githubClient: mockedGithubClient,
-      getJiraClient: () => mockedJiraClient,
+      getJiraClient: getMockedJiraClient,
       addTagToJiraIssuesBuilder: mockedServiceLocator.addTagToJiraIssuesBuilder,
       generateChangelogBuilder: mockedServiceLocator.generateChangelogBuilder,
     });
@@ -89,7 +108,7 @@ describe('run addTagToJiraIssues', () => {
     await addTagToJiraIssues({
       actionAdapter: mockedActionAdapter,
       githubClient: mockedGithubClient,
-      getJiraClient: () => mockedJiraClient,
+      getJiraClient: getMockedJiraClient,
       addTagToJiraIssuesBuilder: mockedServiceLocator.addTagToJiraIssuesBuilder,
       generateChangelogBuilder: mockedServiceLocator.generateChangelogBuilder,
     });
@@ -106,7 +125,7 @@ describe('run addTagToJiraIssues', () => {
     await addTagToJiraIssues({
       actionAdapter: mockedActionAdapter,
       githubClient: mockedGithubClient,
-      getJiraClient: () => mockedJiraClient,
+      getJiraClient: getMockedJiraClient,
       addTagToJiraIssuesBuilder: mockedServiceLocator.addTagToJiraIssuesBuilder,
       generateChangelogBuilder: mockedServiceLocator.generateChangelogBuilder,
     });

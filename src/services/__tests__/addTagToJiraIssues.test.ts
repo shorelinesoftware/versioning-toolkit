@@ -89,6 +89,7 @@ describe('addTagToJiraIssues', () => {
     const result = await addTagToJiraIssues({
       tagFieldName,
       rawTag: tag,
+      prefix: undefined,
     });
     expect(result).toEqual(expectedResult);
   });
@@ -97,6 +98,7 @@ describe('addTagToJiraIssues', () => {
     await addTagToJiraIssues({
       tagFieldName,
       rawTag: tag,
+      prefix: undefined,
     });
     expect(mockedJiraClient.getIssuesByKeys).toHaveBeenCalledWith([
       issue1.key,
@@ -123,6 +125,7 @@ describe('addTagToJiraIssues', () => {
     const result = await addTagToJiraIssues({
       tagFieldName,
       rawTag: tag,
+      prefix: undefined,
     });
     expect(result).toEqual({
       updatedIssues: [issue1.key],
@@ -148,6 +151,7 @@ describe('addTagToJiraIssues', () => {
     const result = await addTagToJiraIssues({
       tagFieldName,
       rawTag: tag,
+      prefix: undefined,
     });
     expect(result).toEqual({
       updatedIssues: [issue1.key, issue2.key],
@@ -168,6 +172,33 @@ describe('addTagToJiraIssues', () => {
     await addTagToJiraIssues({
       tagFieldName,
       rawTag: tag,
+      prefix: undefined,
+    });
+    for (const expectError of expectErrors) {
+      throw expectError;
+    }
+  });
+  it('adds prefix to the tag and branch when updates issue', async () => {
+    const prefix = 'foo';
+    const tagWithPrefix = `${prefix}-${tag}`;
+    const branchWithPrefix = `${prefix}-${branch}`;
+    const expectErrors: unknown[] = [];
+    mockedJiraClient.updateIssue.mockImplementationOnce(async (updates) => {
+      try {
+        expect(updates.fields[customField.id]).toEqual([
+          ...tags,
+          tagWithPrefix,
+          branchWithPrefix,
+        ]);
+      } catch (e) {
+        expectErrors.push(e);
+      }
+      return Promise.resolve();
+    });
+    await addTagToJiraIssues({
+      tagFieldName,
+      rawTag: tag,
+      prefix,
     });
     for (const expectError of expectErrors) {
       throw expectError;
@@ -202,6 +233,7 @@ describe('addTagToJiraIssues', () => {
     await addTagToJiraIssues({
       tagFieldName,
       rawTag: tag,
+      prefix: undefined,
     });
     for (const expectError of expectErrors) {
       throw expectError;
@@ -212,6 +244,7 @@ describe('addTagToJiraIssues', () => {
     const result = await addTagToJiraIssues({
       tagFieldName,
       rawTag: tag,
+      prefix: undefined,
     });
     expect(result).toEqual({
       updatedIssues: [],
@@ -224,6 +257,7 @@ describe('addTagToJiraIssues', () => {
     const result = await addTagToJiraIssues({
       tagFieldName,
       rawTag: tag,
+      prefix: undefined,
     });
     expect(result).toEqual({
       updatedIssues: [],
@@ -238,6 +272,7 @@ describe('addTagToJiraIssues', () => {
     const result = await addTagToJiraIssues({
       tagFieldName,
       rawTag: tag,
+      prefix: undefined,
     });
     expect(result).toEqual({
       updatedIssues: [issue1.key],
@@ -250,6 +285,7 @@ describe('addTagToJiraIssues', () => {
     const result = await addTagToJiraIssues({
       tagFieldName,
       rawTag: tag,
+      prefix: undefined,
     });
     expect(result).toEqual({
       updatedIssues: [issue2.key],
@@ -262,6 +298,7 @@ describe('addTagToJiraIssues', () => {
       addTagToJiraIssues({
         tagFieldName,
         rawTag: '123',
+        prefix: undefined,
       }),
     ).rejects.toThrow();
   });

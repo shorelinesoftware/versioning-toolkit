@@ -1,15 +1,14 @@
 import { Tag } from '../../models/Tag';
-import { AddTagToJiraIssuesParams } from '../../services/addTagToJiraIssues';
 import { MakeReleaseParams } from '../../services/makeRelease';
 import { Inputs } from '../../types';
 import { runAction } from '../actionRunner';
 import { assertGetInputIsCalled } from './helpers';
 import {
+  getMockedJiraClient,
   mockedActionAdapter,
   mockedGithubClient,
   mockedJiraClient,
   mockedServiceLocator,
-  mockedAddTagToJiraIssues,
 } from './mocks';
 
 async function executeAction() {
@@ -18,7 +17,7 @@ async function executeAction() {
     actionAdapter: mockedActionAdapter,
     getServiceLocator: () => mockedServiceLocator,
     githubToken: '',
-    getJiraClient: () => mockedJiraClient,
+    getJiraClient: getMockedJiraClient,
   });
 }
 
@@ -182,35 +181,15 @@ describe('run action', () => {
     });
 
     it('addTagToJiraIssues', async () => {
-      const tag = 'master-1.0.0';
-      const jiraTagFieldName = 'foo';
-      const jiraUserEmail = 'foo@bar.com';
-      const jiraApiToken = '123';
-      const jiraOrgOrigin = 'foo.atlassian.net';
       mockedActionAdapter.getInput.mockImplementation((name) => {
         switch (name as Inputs) {
           case Inputs.actionName:
             return 'addTagToJiraIssues';
-          case Inputs.jiraApiToken:
-            return jiraApiToken;
-          case Inputs.jiraUserEmail:
-            return jiraUserEmail;
-          case Inputs.jiraTagFieldName:
-            return jiraTagFieldName;
-          case Inputs.jiraOrgOrigin:
-            return jiraOrgOrigin;
-          case Inputs.tag:
-            return tag;
           default:
-            throw new Error('Input not found');
+            return '';
         }
       });
       await executeAction();
-      const params: AddTagToJiraIssuesParams = {
-        rawTag: tag,
-        tagFieldName: jiraTagFieldName,
-      };
-      expect(mockedAddTagToJiraIssues).toHaveBeenCalledWith(params);
     });
   });
 });

@@ -6,6 +6,7 @@ import { GenerateChangelog } from './generateChangelog';
 export type AddTagToJiraIssuesParams = {
   rawTag: string;
   tagFieldName: string;
+  prefix: string | undefined;
 };
 
 function checkIsStringArray(field: unknown): field is string[] {
@@ -21,12 +22,19 @@ export type AddTagToJiraIssues = (params: AddTagToJiraIssuesParams) => Promise<{
 
 export type AddTagToJiraIssuesBuilder = typeof addTagToJiraIssuesBuilder;
 
+function appendPrefixOrDefault(tag: Tag, prefix: string | undefined) {
+  if (prefix == null || prefix === '') {
+    return [tag.value, tag.createBranch()];
+  }
+  return [`${prefix}-${tag.value}`, `${prefix}-${tag.createBranch()}`];
+}
+
 export function addTagToJiraIssuesBuilder(
   generateChangelogService: GenerateChangelog,
   jiraClient: IJiraClient,
   info: (message: string) => void,
 ): AddTagToJiraIssues {
-  return async ({ rawTag, tagFieldName }: AddTagToJiraIssuesParams) => {
+  return async ({ rawTag, tagFieldName, prefix }: AddTagToJiraIssuesParams) => {
     const tag = new Tag(rawTag);
     const changelog = await generateChangelogService({ rawHeadTag: tag.value });
     const issuesKeys = changelog
@@ -58,8 +66,7 @@ export function addTagToJiraIssuesBuilder(
               fields: {
                 [tagField.id]: unique([
                   ...prevTags,
-                  tag.value,
-                  tag.createBranch(),
+                  ...appendPrefixOrDefault(tag, prefix),
                 ]),
               },
             },

@@ -1,5 +1,3 @@
-import { IGithubClient } from '../github/GithubClient';
-import { IJiraClient, JiraUser } from '../jira/types';
 import { GetServiceLocator } from '../services/serviceLocator';
 import { ActionTypes, Inputs } from '../types';
 import { assertUnreachable } from '../utils';
@@ -8,13 +6,14 @@ import { addTagToJiraIssues } from './addTagToJiraIssues';
 import { autoIncrementPatch } from './autoIncrementPatch';
 import { makePrerelease } from './makePrerelease';
 import { makeRelease } from './makeRelease';
+import { GetGithubClient, GetJiraClient } from './types';
 
 export type ActionRunnerParams = {
   githubToken: string;
   getServiceLocator: GetServiceLocator;
   actionAdapter: ActionAdapter;
-  getJiraClient: (jiraUser: JiraUser, orgOrigin: string) => IJiraClient;
-  getGithubClient: (token: string) => IGithubClient;
+  getJiraClient: GetJiraClient;
+  getGithubClient: GetGithubClient;
 };
 
 export async function runAction({

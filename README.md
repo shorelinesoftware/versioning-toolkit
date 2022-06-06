@@ -51,7 +51,7 @@ with:
 
 The newly created tag.
 
-# make prerelease tag
+# Make prerelease tag
 
 Makes prerelease tag with the provided prefix. Uses short commit sha as prerelease segment.
 
@@ -87,7 +87,7 @@ with:
   actionName: 'makePrerelease'
 ```
 
-# make release
+# Make release
 
 Creates release branch, updates main tag and pushes new release tag.
 ## Inputs
@@ -140,7 +140,7 @@ with:
     push: true
 ```
 
-# add tag to Jira issues
+# Add tag to Jira issues
 
 It gets commits diff between provided tag and the previous tag, parses commits identifying Jira keys and adds tag and fix version created from tag (e.g if tag is master-2.2.0 then fix version will be master-2.2) to each Jira key using provided Jira Tag field name.
 ## Inputs
@@ -170,6 +170,10 @@ It gets commits diff between provided tag and the previous tag, parses commits i
 
 **Required**. Jira organization origin.  
 
+### `preix`
+
+**Optional**. Prefix that will be added to the tag and tag without patch segment. E.g with prefix: foo/main-3.0.1, without prefix: main-3.0.1
+
 ## Outputs
 
 This action has no output.
@@ -188,4 +192,5 @@ with:
   jiraUserEmail: ${{ secrets.JIRA_USER_EMAIL }}
   jiraApiToken: ${{ secrets.JIRA_API_TOKEN }}
   actionName: 'addTagToJiraIssues'
+  prefix: 'foo'
 ```

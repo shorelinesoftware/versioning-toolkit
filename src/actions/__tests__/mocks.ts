@@ -5,6 +5,7 @@ import { Tag } from '../../models/Tag';
 import { ServiceLocator } from '../../services/serviceLocator';
 import { Mocked } from '../../testUtils';
 import { ActionAdapter } from '../actionAdapter';
+import { ActionRunnerParams } from '../actionRunner';
 
 export const mockedGithubClient: IGithubClient = {
   createTag: jest.fn<Promise<void>, [Tag]>(),
@@ -15,6 +16,11 @@ export const mockedGithubClient: IGithubClient = {
   getTag: jest.fn<Promise<GithubTag>, [string]>(),
   compareTags: jest.fn(async () => Promise.resolve([])),
 };
+
+export const getMockedJiraClient = jest.fn<
+  IJiraClient,
+  Parameters<ActionRunnerParams['getJiraClient']>
+>(() => mockedJiraClient);
 
 export const mockedJiraClient: Mocked<IJiraClient> = {
   getIssuesByKeys: jest.fn(),

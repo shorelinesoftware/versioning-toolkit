@@ -1,13 +1,13 @@
 import { IGithubClient } from '../github/GithubClient';
-import { IJiraClient, JiraUser } from '../jira/types';
 import { AddTagToJiraIssuesBuilder } from '../services/addTagToJiraIssues';
 import { GenerateChangelogBuilder } from '../services/generateChangelog';
 import { Inputs } from '../types';
 import { ActionAdapter } from './actionAdapter';
+import { GetJiraClient } from './types';
 
 export type AddTagToJiraIssuesParams = {
   githubClient: IGithubClient;
-  getJiraClient: (jiraUser: JiraUser, orgOrigin: string) => IJiraClient;
+  getJiraClient: GetJiraClient;
   actionAdapter: ActionAdapter;
   generateChangelogBuilder: GenerateChangelogBuilder;
   addTagToJiraIssuesBuilder: AddTagToJiraIssuesBuilder;
@@ -27,7 +27,7 @@ export async function addTagToJiraIssues({
   const jiraApiToken = getInput(Inputs.jiraApiToken, { required: true });
   const jiraOrgOrigin = getInput(Inputs.jiraOrgOrigin, { required: true });
   const jiraUserEmail = getInput(Inputs.jiraUserEmail, { required: true });
-
+  const prefix = getInput(Inputs.prefix);
   const jiraClient = getJiraClient(
     {
       token: jiraApiToken,
@@ -45,6 +45,7 @@ export async function addTagToJiraIssues({
   const result = await addTagToJiraIssuesService({
     rawTag: tag,
     tagFieldName: jiraTagFieldName,
+    prefix,
   });
   const notUpdatedIssues = result.allIssues.filter(
     (key) => !result.updatedIssues.includes(key),
