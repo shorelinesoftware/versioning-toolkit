@@ -20671,7 +20671,7 @@ function appendPrefixOrDefault(tag, prefix) {
     if (prefix == null || prefix === '') {
         return [tag.value, tag.createBranch()];
     }
-    return [`${prefix}-${tag.value}`, `${prefix}-${tag.createBranch()}`];
+    return [`${prefix}_${tag.value}`, `${prefix}_${tag.createBranch()}`];
 }
 function addTagToJiraIssuesBuilder(generateChangelogService, jiraClient, info) {
     return async ({ rawTag, tagFieldName, prefix }) => {

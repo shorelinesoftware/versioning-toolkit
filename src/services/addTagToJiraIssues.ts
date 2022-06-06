@@ -26,7 +26,7 @@ function appendPrefixOrDefault(tag: Tag, prefix: string | undefined) {
   if (prefix == null || prefix === '') {
     return [tag.value, tag.createBranch()];
   }
-  return [`${prefix}-${tag.value}`, `${prefix}-${tag.createBranch()}`];
+  return [`${prefix}_${tag.value}`, `${prefix}_${tag.createBranch()}`];
 }
 
 export function addTagToJiraIssuesBuilder(
