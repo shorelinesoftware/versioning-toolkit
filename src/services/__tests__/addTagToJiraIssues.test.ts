@@ -179,9 +179,9 @@ describe('addTagToJiraIssues', () => {
     }
   });
   it('adds prefix to the tag and branch when updates issue', async () => {
-    const prefix = 'foo';
-    const tagWithPrefix = `${prefix}_${tag}`;
-    const branchWithPrefix = `${prefix}_${branch}`;
+    const prefix = 'foo_';
+    const tagWithPrefix = `${prefix}${tag}`;
+    const branchWithPrefix = `${prefix}${branch}`;
     const expectErrors: unknown[] = [];
     mockedJiraClient.updateIssue.mockImplementationOnce(async (updates) => {
       try {
