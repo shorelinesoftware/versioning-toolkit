@@ -1,5 +1,5 @@
 name: 'TAG'
-description: 'Greet someone'
+description: 'create new tag based on branch'
 inputs:
   is_releasabe_branch:
     description: 'whether the branch is main of release. If is is releasable branch then tag will be pushed to repository'
