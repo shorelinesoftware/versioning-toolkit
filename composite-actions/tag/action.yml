@@ -22,7 +22,7 @@ runs:
   steps:
     - uses: actions/checkout@v3
       with:
-        repository: ${{ inputs.versioning_tookit_ref }}
+        repository: shorelinesoftware/versioning-toolkit
     - shell: bash
       run: ls
     - name: Make prerelease tag
