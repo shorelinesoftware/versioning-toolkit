@@ -10,6 +10,9 @@ inputs:
   branch_name:
     description: 'branch name'
     required: true
+  versioning_tookit_ref:
+    required: true
+    description: ''
 outputs:
   NEW_TAG:
     description: "newly created tag"
@@ -20,7 +23,7 @@ runs:
     - name: Make prerelease tag
       if: ${{ inputs.is_releasabe_branch == 'false' && github.ref_type != 'tag' }}
       id: make_prerelease_tag
-      uses: 'shorelinesoftware/versioning-toolkit/'
+      uses: ${{ inputs.versioning_tookit_ref }}
       with:
         prefix: '${{ inputs.branch_name }}'
         actionName: 'makePrerelease'
@@ -29,7 +32,7 @@ runs:
     - name: Make release tag
       if: ${{ inputs.is_releasabe_branch == 'true' && github.ref_type != 'tag' }}
       id: make_release_tag
-      uses: 'shorelinesoftware/versioning-toolkit/'
+      uses: ${{ inputs.versioning_tookit_ref }}
       with:
         actionName: 'autoIncrementPatch'
         prefix: '${{ inputs.branch_name }}'
