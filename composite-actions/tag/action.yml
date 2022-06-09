@@ -20,7 +20,7 @@ runs:
     - name: Make prerelease tag
       if: ${{ inputs.is_releasabe_branch == 'false' && github.ref_type != 'tag' }}
       id: make_prerelease_tag
-      uses: './'
+      uses: '../../'
       with:
         prefix: '${{ inputs.branch_name }}'
         actionName: 'makePrerelease'
@@ -29,7 +29,7 @@ runs:
     - name: Make release tag
       if: ${{ inputs.is_releasabe_branch == 'true' && github.ref_type != 'tag' }}
       id: make_release_tag
-      uses: './'
+      uses: '../../'
       with:
         actionName: 'autoIncrementPatch'
         prefix: '${{ inputs.branch_name }}'
