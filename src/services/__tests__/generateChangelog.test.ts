@@ -218,7 +218,7 @@ describe('generateChangelog', () => {
   it('sets existsInJira false for each changelog item if key does not exist in JIRA', async () => {
     mockedJiraClient.getIssuesByKeys.mockReturnValueOnce(Promise.resolve([]));
     const commit1 = {
-      message: 'test1',
+      message: 'BAR-1',
       sha: '1',
     };
     const commit2 = {
@@ -234,7 +234,7 @@ describe('generateChangelog', () => {
     const expectedChangeLog: ChangelogItem[] = [
       {
         existsInJira: false,
-        issueKey: undefined,
+        issueKey: 'BAR-1',
         summary: commit1.message,
         type: 'unknown',
       },
@@ -248,14 +248,10 @@ describe('generateChangelog', () => {
     expect(expectedChangeLog.sort(changelogSortingPredicate)).toEqual(
       changelog.sort(changelogSortingPredicate),
     );
-    expectedChangeLog
-      .filter((changelogItem) => !changelogItem.existsInJira)
-      .forEach((changelogItem, index) => {
-        expect(info).toHaveBeenNthCalledWith(
-          index + 1,
-          `${changelogItem.issueKey} does not exist in Jira or user has no access to it`,
-        );
-      });
+    expect(info).toHaveBeenCalledTimes(1);
+    expect(info).toHaveBeenLastCalledWith(
+      `${expectedChangeLog[0].issueKey} does not exist in Jira or user has no access to it`,
+    );
   });
   it('sets existsInJira true and type for each changelog item if key exists in JIRA', async () => {
     const issue1 = {

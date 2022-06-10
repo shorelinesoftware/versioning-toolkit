@@ -61,7 +61,7 @@ export function generateChangelogBuilder(
         changelogItem.summary = issue.fields.summary;
         changelogItem.existsInJira = true;
         changelogItem.type = issue.fields.issuetype.name;
-      } else {
+      } else if (changelogItem.issueKey) {
         info(
           `${changelogItem.issueKey} does not exist in Jira or user has no access to it`,
         );

@@ -20781,7 +20781,7 @@ function generateChangelogBuilder(githubClient, jiraClient, info) {
                 changelogItem.existsInJira = true;
                 changelogItem.type = issue.fields.issuetype.name;
             }
-            else {
+            else if (changelogItem.issueKey) {
                 info(`${changelogItem.issueKey} does not exist in Jira or user has no access to it`);
             }
         }
