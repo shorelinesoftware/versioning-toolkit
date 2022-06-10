@@ -19,6 +19,7 @@ export type GenerateChangelogBuilder = typeof generateChangelogBuilder;
 export function generateChangelogBuilder(
   githubClient: IGithubClient,
   jiraClient: IJiraClient,
+  info: (message: string) => void,
 ): GenerateChangelog {
   return async ({ rawHeadTag }: GenerateChangelogParams) => {
     const headTag = new Tag(rawHeadTag);
@@ -60,6 +61,10 @@ export function generateChangelogBuilder(
         changelogItem.summary = issue.fields.summary;
         changelogItem.existsInJira = true;
         changelogItem.type = issue.fields.issuetype.name;
+      } else {
+        info(
+          `${changelogItem.issueKey} does not exist in Jira or user has no access to it`,
+        );
       }
     }
     return Object.values(

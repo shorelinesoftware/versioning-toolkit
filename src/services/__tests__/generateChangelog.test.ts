@@ -172,9 +172,11 @@ describe('generateChangelog', () => {
     getCustomFields: jest.fn<Promise<CustomField[]>, []>(),
     updateIssue: jest.fn<Promise<void>, [IssueFieldUpdates, string]>(),
   };
+  const info = jest.fn();
   const generateChangelog = generateChangelogBuilder(
     mockedGithubClient,
     mockedJiraClient,
+    info,
   );
   it('generates changelog without duplicated issues', async () => {
     const expectedChangeLog: ChangelogItem[] = [
@@ -246,6 +248,14 @@ describe('generateChangelog', () => {
     expect(expectedChangeLog.sort(changelogSortingPredicate)).toEqual(
       changelog.sort(changelogSortingPredicate),
     );
+    expectedChangeLog
+      .filter((changelogItem) => !changelogItem.existsInJira)
+      .forEach((changelogItem, index) => {
+        expect(info).toHaveBeenNthCalledWith(
+          index + 1,
+          `${changelogItem.issueKey} does not exist in Jira or user has no access to it`,
+        );
+      });
   });
   it('sets existsInJira true and type for each changelog item if key exists in JIRA', async () => {
     const issue1 = {

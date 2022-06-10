@@ -35,7 +35,11 @@ export async function addTagToJiraIssues({
     },
     jiraOrgOrigin,
   );
-  const generateChangelog = generateChangelogBuilder(githubClient, jiraClient);
+  const generateChangelog = generateChangelogBuilder(
+    githubClient,
+    jiraClient,
+    actionAdapter.info,
+  );
   const addTagToJiraIssuesService = addTagToJiraIssuesBuilder(
     generateChangelog,
     jiraClient,
@@ -50,6 +54,7 @@ export async function addTagToJiraIssues({
   const notUpdatedIssues = result.allIssues.filter(
     (key) => !result.updatedIssues.includes(key),
   );
+  info(`all issues: ${result.allIssues.join(', ')}`);
   if (notUpdatedIssues.length !== 0) {
     info(`issues that were not updated: ${notUpdatedIssues.join(', ')}`);
   }

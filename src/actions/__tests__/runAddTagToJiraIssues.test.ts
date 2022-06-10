@@ -83,6 +83,23 @@ describe('run addTagToJiraIssues', () => {
     });
     assertGetInputIsCalled(Inputs.prefix);
   });
+  it('and outputs all issues', async () => {
+    mockedAddTagToJiraIssues.mockResolvedValueOnce({
+      allIssues: ['1', '2', '3', '4'],
+      updatedIssues: ['1', '2'],
+    });
+    await addTagToJiraIssues({
+      actionAdapter: mockedActionAdapter,
+      githubClient: mockedGithubClient,
+      getJiraClient: getMockedJiraClient,
+      addTagToJiraIssuesBuilder: mockedServiceLocator.addTagToJiraIssuesBuilder,
+      generateChangelogBuilder: mockedServiceLocator.generateChangelogBuilder,
+    });
+    AssertToHaveBeenAnyNthCalledWithParams(
+      mockedActionAdapter.info,
+      'all issues: 1, 2, 3, 4',
+    );
+  });
   it('and outputs not updated issues', async () => {
     mockedAddTagToJiraIssues.mockResolvedValueOnce({
       allIssues: ['1', '2', '3', '4'],
@@ -117,7 +134,7 @@ describe('run addTagToJiraIssues', () => {
       'updated issues: 1, 2',
     );
   });
-  it('does not output not updated issues if all issues were updated', async () => {
+  it('does not output empty list of not updated issues if all issues were updated', async () => {
     mockedAddTagToJiraIssues.mockResolvedValueOnce({
       allIssues: ['1', '2', '3', '4'],
       updatedIssues: ['1', '2', '3', '4'],

@@ -38,7 +38,7 @@ export const mockedServiceLocator: Mocked<ServiceLocator> = {
     (_generateChangelog, _jiraClient, _info) => mockedAddTagToJiraIssues,
   ),
   generateChangelogBuilder: jest.fn(
-    (_githubClient, _jiraClient) => mockedGenerateChangelog,
+    (_githubClient, _jiraClient, _info) => mockedGenerateChangelog,
   ),
 };
 

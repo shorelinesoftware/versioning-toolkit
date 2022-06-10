@@ -20074,7 +20074,7 @@ async function addTagToJiraIssues({ actionAdapter, getJiraClient, githubClient, 
         token: jiraApiToken,
         email: jiraUserEmail,
     }, jiraOrgOrigin);
-    const generateChangelog = generateChangelogBuilder(githubClient, jiraClient);
+    const generateChangelog = generateChangelogBuilder(githubClient, jiraClient, actionAdapter.info);
     const addTagToJiraIssuesService = addTagToJiraIssuesBuilder(generateChangelog, jiraClient, actionAdapter.info);
     const tag = getInput(Inputs.tag, { required: true });
     const result = await addTagToJiraIssuesService({
@@ -20083,6 +20083,7 @@ async function addTagToJiraIssues({ actionAdapter, getJiraClient, githubClient, 
         prefix,
     });
     const notUpdatedIssues = result.allIssues.filter((key) => !result.updatedIssues.includes(key));
+    info(`all issues: ${result.allIssues.join(', ')}`);
     if (notUpdatedIssues.length !== 0) {
         info(`issues that were not updated: ${notUpdatedIssues.join(', ')}`);
     }
@@ -20742,7 +20743,7 @@ async function autoIncrementPatch_autoIncrementPatch({ prefix, githubClient, pus
 
 
 const JIRA_KEY_REGEXP = /((?<!([A-Za-z]{1,10})-?)[A-Z]+-[1-9]\d*)/g;
-function generateChangelogBuilder(githubClient, jiraClient) {
+function generateChangelogBuilder(githubClient, jiraClient, info) {
     return async ({ rawHeadTag }) => {
         const headTag = new Tag(rawHeadTag);
         const tags = await githubClient.listSemVerTags(true);
@@ -20779,6 +20780,9 @@ function generateChangelogBuilder(githubClient, jiraClient) {
                 changelogItem.summary = issue.fields.summary;
                 changelogItem.existsInJira = true;
                 changelogItem.type = issue.fields.issuetype.name;
+            }
+            else {
+                info(`${changelogItem.issueKey} does not exist in Jira or user has no access to it`);
             }
         }
         return Object.values(changeLog.reduce((a, c) => {
