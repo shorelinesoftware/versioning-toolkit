@@ -306,4 +306,12 @@ describe('Tag', () => {
       );
     });
   });
+  describe('resetPatchSegment', () => {
+    it('resets patch segment', () => {
+      const expectedResult = new Tag('main-1.1.0');
+      const actualResult = new Tag('main-1.1.1').resetPatchSegment();
+      expect(actualResult).toEqual(expectedResult);
+      expect(actualResult).not.toBe(expectedResult);
+    });
+  });
 });

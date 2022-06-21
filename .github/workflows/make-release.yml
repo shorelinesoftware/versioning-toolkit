@@ -39,7 +39,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          mainTag: ${{ github.event.inputs.mainTag }}
+          tag: ${{ github.event.inputs.mainTag }}
           releasePrefix: ${{ github.event.inputs.releasePrefix }}
           majorSegment: ${{ github.event.inputs.majorSegment }}
           minorSegment: ${{ github.event.inputs.minorSegment }}

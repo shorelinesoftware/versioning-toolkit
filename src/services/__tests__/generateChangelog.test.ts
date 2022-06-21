@@ -151,23 +151,24 @@ describe('generateChangelog', () => {
     ),
   };
   const issuetype = 'bug';
+
+  function makeJiraIssue(key: string, index: number) {
+    return {
+      id: index,
+      key,
+      fields: {
+        issuetype: {
+          id: index,
+          name: issuetype,
+        },
+        summary: `${key}-${index}`,
+      },
+    };
+  }
+
   const mockedJiraClient: Mocked<IJiraClient> = {
     getIssuesByKeys: jest.fn(async (_keys) =>
-      Promise.resolve<Issue[]>(
-        jiraKeys.map((key, index) => {
-          return {
-            id: index,
-            key,
-            fields: {
-              issuetype: {
-                id: index,
-                name: issuetype,
-              },
-              summary: `${key}-${index}`,
-            },
-          };
-        }),
-      ),
+      Promise.resolve<Issue[]>(jiraKeys.map(makeJiraIssue)),
     ),
     getCustomFields: jest.fn<Promise<CustomField[]>, []>(),
     updateIssue: jest.fn<Promise<void>, [IssueFieldUpdates, string]>(),
@@ -215,6 +216,92 @@ describe('generateChangelog', () => {
       changelog.sort(changelogSortingPredicate),
     );
   });
+  describe('filters out changelog items if its Jira key exists in the previous changelog', () => {
+    const jiraIssue = makeJiraIssue(jiraKeys[1], 1);
+    const expectedChangeLog: ChangelogItem[] = [
+      {
+        summary: jiraIssue.fields.summary,
+        type: jiraIssue.fields.issuetype.name,
+        issueKey: jiraIssue.key,
+        existsInJira: true,
+      },
+    ];
+    it('when previous tag is default', async () => {
+      mockedGithubClient.compareTags.mockImplementation(
+        async (_baseTag, _headTag) => {
+          if (_baseTag.value === 'main-1.0.0') {
+            return Promise.resolve([
+              {
+                message: `${jiraKeys[0]}`,
+                sha: '0',
+              },
+            ]);
+          }
+          return Promise.resolve([
+            {
+              message: `${jiraKeys[0]}`,
+              sha: '1',
+            },
+            {
+              message: `${jiraKeys[1]}`,
+              sha: '2',
+            },
+          ]);
+        },
+      );
+      mockedGithubClient.listSemVerTags.mockResolvedValueOnce([
+        new Tag('main-1.0.0'),
+        new Tag('main-1.0.1'),
+        new Tag('main-2.0.2'),
+      ]);
+
+      const changelog = await generateChangelog({
+        rawHeadTag: new Tag('main-2.0.2').value,
+      });
+      expect(expectedChangeLog.sort(changelogSortingPredicate)).toEqual(
+        changelog.sort(changelogSortingPredicate),
+      );
+    });
+    it('when previous tag is default with incremented patch segment', async () => {
+      mockedGithubClient.compareTags.mockImplementation(
+        async (_baseTag, _headTag) => {
+          if (_baseTag.value === 'main-1.0.0') {
+            return Promise.resolve([]);
+          }
+          if (_baseTag.value === 'main-1.0.1') {
+            return Promise.resolve([
+              {
+                message: `${jiraKeys[0]}`,
+                sha: '0',
+              },
+            ]);
+          }
+          return Promise.resolve([
+            {
+              message: `${jiraKeys[0]}`,
+              sha: '1',
+            },
+            {
+              message: `${jiraKeys[1]}`,
+              sha: '2',
+            },
+          ]);
+        },
+      );
+      mockedGithubClient.listSemVerTags.mockResolvedValueOnce([
+        new Tag('main-1.0.1'),
+        new Tag('main-1.0.2'),
+        new Tag('main-2.0.2'),
+      ]);
+      const changelog = await generateChangelog({
+        rawHeadTag: new Tag('main-2.0.2').value,
+      });
+      expect(expectedChangeLog.sort(changelogSortingPredicate)).toEqual(
+        changelog.sort(changelogSortingPredicate),
+      );
+    });
+  });
+
   it('sets existsInJira false for each changelog item if key does not exist in JIRA', async () => {
     mockedJiraClient.getIssuesByKeys.mockReturnValueOnce(Promise.resolve([]));
     const commit1 = {

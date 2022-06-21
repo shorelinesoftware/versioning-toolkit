@@ -20380,6 +20380,16 @@ class Tag {
             this._semVer.minor === 0 &&
             this._semVer.patch === 0);
     }
+    resetPatchSegment() {
+        return new Tag({
+            prefix: this._prefix,
+            version: {
+                major: this.majorSegment,
+                minor: this.minorSegment,
+                patch: 0,
+            },
+        });
+    }
     static getHighestTag(tags, prefixOrTag) {
         if (!prefixOrTag) {
             tags.sort(tagComparer);
@@ -20743,6 +20753,28 @@ async function autoIncrementPatch_autoIncrementPatch({ prefix, githubClient, pus
 
 
 const JIRA_KEY_REGEXP = /((?<!([A-Za-z]{1,10})-?)[A-Z]+-[1-9]\d*)/g;
+function getChangeLog(commits) {
+    const changeLog = commits
+        .map((commit) => {
+        const keys = unique(commit.message.match(JIRA_KEY_REGEXP) ?? []);
+        if (keys.length === 0) {
+            return {
+                summary: commit.message,
+                issueKey: undefined,
+                existsInJira: false,
+                type: 'unknown',
+            };
+        }
+        return keys.map((key) => ({
+            issueKey: key,
+            summary: commit.message,
+            existsInJira: false,
+            type: 'unknown',
+        }));
+    })
+        .flat();
+    return changeLog;
+}
 function generateChangelogBuilder(githubClient, jiraClient, info) {
     return async ({ rawHeadTag }) => {
         const headTag = new Tag(rawHeadTag);
@@ -20752,25 +20784,23 @@ function generateChangelogBuilder(githubClient, jiraClient, info) {
             return [];
         }
         const commits = await githubClient.compareTags(baseTag, headTag);
-        const changeLog = commits
-            .map((commit) => {
-            const keys = unique(commit.message.match(JIRA_KEY_REGEXP) ?? []);
-            if (keys.length === 0) {
-                return {
-                    summary: commit.message,
-                    issueKey: undefined,
-                    existsInJira: false,
-                    type: 'unknown',
-                };
+        let prevIssueKeys = undefined;
+        if (baseTag.minorSegment < headTag.minorSegment ||
+            baseTag.majorSegment < headTag.majorSegment) {
+            let prevCommits = await githubClient.compareTags(baseTag.resetPatchSegment(), baseTag);
+            if (prevCommits.length === 0) {
+                prevCommits = await githubClient.compareTags(
+                // in case if started tag has patch segment equal not to 0 but to 1
+                baseTag.resetPatchSegment().bumpPatchSegment(), baseTag);
             }
-            return keys.map((key) => ({
-                issueKey: key,
-                summary: commit.message,
-                existsInJira: false,
-                type: 'unknown',
-            }));
-        })
-            .flat();
+            prevIssueKeys = getChangeLog(prevCommits).map((changeLogItem) => changeLogItem.issueKey);
+        }
+        const changeLog = getChangeLog(commits).filter((changeLogItem) => {
+            if (!changeLogItem.issueKey) {
+                return true;
+            }
+            return !prevIssueKeys?.includes(changeLogItem.issueKey);
+        });
         const issues = await jiraClient.getIssuesByKeys(unique(changeLog
             .map((item) => item.issueKey)
             .filter((key) => key != null)));
