@@ -117,6 +117,17 @@ export class Tag {
     );
   }
 
+  resetPatchSegment() {
+    return new Tag({
+      prefix: this._prefix,
+      version: {
+        major: this.majorSegment,
+        minor: this.minorSegment,
+        patch: 0,
+      },
+    });
+  }
+
   static getHighestTag(
     tags: Tag[],
     prefixOrTag?: string | Tag,
