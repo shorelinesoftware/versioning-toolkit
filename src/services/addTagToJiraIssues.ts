@@ -7,6 +7,7 @@ export type AddTagToJiraIssuesParams = {
   rawTag: string;
   tagFieldName: string;
   prefix: string | undefined;
+  additionalTag: string | undefined;
 };
 
 function checkIsStringArray(field: unknown): field is string[] {
@@ -22,11 +23,19 @@ export type AddTagToJiraIssues = (params: AddTagToJiraIssuesParams) => Promise<{
 
 export type AddTagToJiraIssuesBuilder = typeof addTagToJiraIssuesBuilder;
 
-function appendPrefixOrDefault(tag: Tag, prefix: string | undefined) {
-  if (prefix == null || prefix === '') {
-    return [tag.value, tag.createBranch()];
+function makeTags(
+  tag: Tag,
+  prefix: string | undefined,
+  additionalTag: string | undefined,
+) {
+  let result = [tag.value, tag.createBranch()];
+  if (prefix) {
+    result = [`${prefix}${tag.value}`, `${prefix}${tag.createBranch()}`];
   }
-  return [`${prefix}${tag.value}`, `${prefix}${tag.createBranch()}`];
+  if (additionalTag) {
+    result.push(additionalTag);
+  }
+  return result;
 }
 
 export function addTagToJiraIssuesBuilder(
@@ -34,7 +43,12 @@ export function addTagToJiraIssuesBuilder(
   jiraClient: IJiraClient,
   info: (message: string) => void,
 ): AddTagToJiraIssues {
-  return async ({ rawTag, tagFieldName, prefix }: AddTagToJiraIssuesParams) => {
+  return async ({
+    rawTag,
+    tagFieldName,
+    prefix,
+    additionalTag,
+  }: AddTagToJiraIssuesParams) => {
     const tag = new Tag(rawTag);
     const changelog = await generateChangelogService({ rawHeadTag: tag.value });
     const issuesKeys = changelog
@@ -66,7 +80,7 @@ export function addTagToJiraIssuesBuilder(
               fields: {
                 [tagField.id]: unique([
                   ...prevTags,
-                  ...appendPrefixOrDefault(tag, prefix),
+                  ...makeTags(tag, prefix, additionalTag),
                 ]),
               },
             },

@@ -18,6 +18,7 @@ describe('run addTagToJiraIssues', () => {
   const jiraUserEmail = 'foo@bar.com';
   const jiraApiToken = '123';
   const jiraOrgOrigin = 'foo.atlassian.net';
+  const jiraAdditionalTag = 'tag';
   const prefix = 'bar';
   mockedActionAdapter.getInput.mockImplementation((name) => {
     switch (name as Inputs) {
@@ -35,6 +36,8 @@ describe('run addTagToJiraIssues', () => {
         return tag;
       case Inputs.prefix:
         return prefix;
+      case Inputs.jiraAdditionalTag:
+        return jiraAdditionalTag;
       default:
         throw new Error('Input not found');
     }
@@ -58,6 +61,7 @@ describe('run addTagToJiraIssues', () => {
       rawTag: tag,
       tagFieldName: jiraTagFieldName,
       prefix,
+      additionalTag: jiraAdditionalTag,
     });
     expect(getMockedJiraClient).toHaveBeenCalledWith<Parameters<GetJiraClient>>(
       {
