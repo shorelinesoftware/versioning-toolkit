@@ -10,6 +10,7 @@ export enum Inputs {
   jiraUserEmail = 'jiraUserEmail',
   jiraApiToken = 'jiraApiToken',
   jiraOrgOrigin = 'jiraOrgOrigin',
+  jiraAdditionalTag = 'jiraAdditionalTag',
 }
 
 export type ActionTypes =

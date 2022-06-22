@@ -33,6 +33,9 @@ inputs:
   jiraOrgOrigin:
     description: 'Jira org origin. Example https://foo.atlassian.net'
     required: false
+  jiraAdditionalTag:
+    description: 'Additional tag that will be added to each Jira issue in changelog'
+    required: false
   majorSegment:
     description: 'major segment of the release tag version. If not specified previous release tag value is used'
     required: false

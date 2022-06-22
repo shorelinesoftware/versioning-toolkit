@@ -172,7 +172,12 @@ It gets commits diff between provided tag and the previous tag, parses commits i
 
 ### `preix`
 
-**Optional**. Prefix that will be added to the tag and tag without patch segment. E.g with prefix: foo/main-3.0.1, without prefix: main-3.0.1
+**Optional**. Prefix that will be added to the tag and tag without patch segment. E.g if prefix is `foo-` it will be `foo-main-3.0.1, foo-main-3.0`, without prefix: `main-3.0.1, main-3.0`
+
+### `jiraAdditionalTag`
+
+**Optional**. Additional tag that will be added to each Jira issue in changelog
+
 
 ## Outputs
 
@@ -193,4 +198,5 @@ with:
   jiraApiToken: ${{ secrets.JIRA_API_TOKEN }}
   actionName: 'addTagToJiraIssues'
   prefix: 'foo'
+  jiraAdditionalTag: 'release'
 ```

@@ -27,6 +27,7 @@ export async function addTagToJiraIssues({
   const jiraApiToken = getInput(Inputs.jiraApiToken, { required: true });
   const jiraOrgOrigin = getInput(Inputs.jiraOrgOrigin, { required: true });
   const jiraUserEmail = getInput(Inputs.jiraUserEmail, { required: true });
+  const jiraAdditionalTag = getInput(Inputs.jiraAdditionalTag);
   const prefix = getInput(Inputs.prefix);
   const jiraClient = getJiraClient(
     {
@@ -50,6 +51,7 @@ export async function addTagToJiraIssues({
     rawTag: tag,
     tagFieldName: jiraTagFieldName,
     prefix,
+    additionalTag: jiraAdditionalTag,
   });
   const notUpdatedIssues = result.allIssues.filter(
     (key) => !result.updatedIssues.includes(key),

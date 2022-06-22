@@ -20020,6 +20020,7 @@ var Inputs;
     Inputs["jiraUserEmail"] = "jiraUserEmail";
     Inputs["jiraApiToken"] = "jiraApiToken";
     Inputs["jiraOrgOrigin"] = "jiraOrgOrigin";
+    Inputs["jiraAdditionalTag"] = "jiraAdditionalTag";
 })(Inputs || (Inputs = {}));
 
 ;// CONCATENATED MODULE: ./lib/utils.js
@@ -20069,6 +20070,7 @@ async function addTagToJiraIssues({ actionAdapter, getJiraClient, githubClient, 
     const jiraApiToken = getInput(Inputs.jiraApiToken, { required: true });
     const jiraOrgOrigin = getInput(Inputs.jiraOrgOrigin, { required: true });
     const jiraUserEmail = getInput(Inputs.jiraUserEmail, { required: true });
+    const jiraAdditionalTag = getInput(Inputs.jiraAdditionalTag);
     const prefix = getInput(Inputs.prefix);
     const jiraClient = getJiraClient({
         token: jiraApiToken,
@@ -20081,6 +20083,7 @@ async function addTagToJiraIssues({ actionAdapter, getJiraClient, githubClient, 
         rawTag: tag,
         tagFieldName: jiraTagFieldName,
         prefix,
+        additionalTag: jiraAdditionalTag,
     });
     const notUpdatedIssues = result.allIssues.filter((key) => !result.updatedIssues.includes(key));
     info(`all issues: ${result.allIssues.join(', ')}`);
@@ -20678,14 +20681,18 @@ class JiraClient {
 function checkIsStringArray(field) {
     return (Array.isArray(field) && field.every((item) => typeof item === 'string'));
 }
-function appendPrefixOrDefault(tag, prefix) {
-    if (prefix == null || prefix === '') {
-        return [tag.value, tag.createBranch()];
+function makeTags(tag, prefix, additionalTag) {
+    let result = [tag.value, tag.createBranch()];
+    if (prefix) {
+        result = [`${prefix}${tag.value}`, `${prefix}${tag.createBranch()}`];
     }
-    return [`${prefix}${tag.value}`, `${prefix}${tag.createBranch()}`];
+    if (additionalTag) {
+        result.push(additionalTag);
+    }
+    return result;
 }
 function addTagToJiraIssuesBuilder(generateChangelogService, jiraClient, info) {
-    return async ({ rawTag, tagFieldName, prefix }) => {
+    return async ({ rawTag, tagFieldName, prefix, additionalTag, }) => {
         const tag = new Tag(rawTag);
         const changelog = await generateChangelogService({ rawHeadTag: tag.value });
         const issuesKeys = changelog
@@ -20713,7 +20720,7 @@ function addTagToJiraIssuesBuilder(generateChangelogService, jiraClient, info) {
                     fields: {
                         [tagField.id]: unique([
                             ...prevTags,
-                            ...appendPrefixOrDefault(tag, prefix),
+                            ...makeTags(tag, prefix, additionalTag),
                         ]),
                     },
                 }, issue.key);
