@@ -20738,12 +20738,12 @@ function addTagToJiraIssuesBuilder(generateChangelogService, jiraClient, info) {
             try {
                 // eslint-disable-next-line no-console
                 console.log('try to update issue - tagField.id = ', tagField.id);
+                const newTags = makeTags(tag, prefix, additionalTag);
+                // eslint-disable-next-line no-console
+                console.log('newTags = ', JSON.stringify(newTags));
                 await jiraClient.updateIssue({
                     fields: {
-                        [tagField.id]: unique([
-                            ...prevTags,
-                            ...makeTags(tag, prefix, additionalTag),
-                        ]),
+                        [tagField.id]: unique([...prevTags, ...newTags]),
                     },
                 }, issue.key);
                 // eslint-disable-next-line no-console
