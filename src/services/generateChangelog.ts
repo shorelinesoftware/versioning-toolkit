@@ -48,7 +48,7 @@ export function generateChangelogBuilder(
   return async ({ rawHeadTag }: GenerateChangelogParams) => {
     const headTag = new Tag(rawHeadTag);
     // const tags = ["master-1.3.8, master-1.3.9"]; // await githubClient.listSemVerTags(true);
-    const baseTag = new Tag('master-1.3.9'); // Tag.getPreviousTag(tags, headTag);
+    const baseTag = new Tag('master-1.3.8'); // Tag.getPreviousTag(tags, headTag);
     if (baseTag == null) {
       return [];
     }
