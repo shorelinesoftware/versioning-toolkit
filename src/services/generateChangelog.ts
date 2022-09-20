@@ -46,9 +46,17 @@ export function generateChangelogBuilder(
   info: (message: string) => void,
 ): GenerateChangelog {
   return async ({ rawHeadTag }: GenerateChangelogParams) => {
+    // eslint-disable-next-line no-console
+    console.log('generateChangelog - rawHeadTag = ', rawHeadTag);
     const headTag = new Tag(rawHeadTag);
-    // const tags = ["master-1.3.8, master-1.3.9"]; // await githubClient.listSemVerTags(true);
-    const baseTag = new Tag('master-1.3.8'); // Tag.getPreviousTag(tags, headTag);
+    // eslint-disable-next-line no-console
+    console.log('generateChangelog - headTag = ', headTag);
+    const tags = await githubClient.listSemVerTags(true);
+    // eslint-disable-next-line no-console
+    console.log('generateChangelog - tags = ', tags);
+    const baseTag = Tag.getPreviousTag(tags, headTag);
+    // eslint-disable-next-line no-console
+    console.log('generateChangelog - baseTag = ', baseTag);
     if (baseTag == null) {
       return [];
     }
