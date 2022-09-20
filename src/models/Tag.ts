@@ -33,9 +33,16 @@ export class Tag {
       }
 
       // eslint-disable-next-line no-console
-      console.log('Gemerate semVer by tag version', JSON.stringify(tag));
+      console.log('Generate semVer by tag version', JSON.stringify(tag));
       this._semVer = new SemVer(tag.version);
+
+      // eslint-disable-next-line no-console
+      console.log(
+        'Generate semVer by tag version - semVer = ',
+        JSON.stringify(this._semVer),
+      );
       this._prefix = tag.prefix;
+
       return;
     }
     if (!args.prefix) {

@@ -20313,8 +20313,10 @@ class Tag {
                 throw new Error(`${args} can't be parsed into a tag`);
             }
             // eslint-disable-next-line no-console
-            console.log('Gemerate semVer by tag version', JSON.stringify(tag));
+            console.log('Generate semVer by tag version', JSON.stringify(tag));
             this._semVer = new semver.SemVer(tag.version);
+            // eslint-disable-next-line no-console
+            console.log('Generate semVer by tag version - semVer = ', JSON.stringify(this._semVer));
             this._prefix = tag.prefix;
             return;
         }
@@ -20910,8 +20912,8 @@ function getChangeLog(commits) {
 function generateChangelogBuilder(githubClient, jiraClient, info) {
     return async ({ rawHeadTag }) => {
         const headTag = new Tag(rawHeadTag);
-        const tags = await githubClient.listSemVerTags(true);
-        const baseTag = Tag.getPreviousTag(tags, headTag);
+        // const tags = ["master-1.3.8, master-1.3.9"]; // await githubClient.listSemVerTags(true);
+        const baseTag = new Tag('master-1.3.9'); // Tag.getPreviousTag(tags, headTag);
         if (baseTag == null) {
             return [];
         }

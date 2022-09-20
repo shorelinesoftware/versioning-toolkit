@@ -89,6 +89,10 @@ describe('Tag', () => {
         tagOrBranch: 'feature-foo-bar-1.1.0-abc',
         expected: new Tag('feature-foo-bar-1.1.0-abc'),
       },
+      // {
+      //   tagOrBranch: 'stable-2.2',
+      //   expected: new Tag('stable-2.2.4'),
+      // },
     ])('parses tag($tagOrBranch)', ({ tagOrBranch, expected }) => {
       const actual = Tag.parse(tagOrBranch);
       expect(actual?.value).toBe(expected.value);
