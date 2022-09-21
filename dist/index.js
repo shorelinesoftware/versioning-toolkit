@@ -20918,7 +20918,7 @@ function generateChangelogBuilder(githubClient, jiraClient, info) {
         console.log('generateChangelog - headTag = ', headTag);
         const tags = await githubClient.listSemVerTags(true);
         // eslint-disable-next-line no-console
-        console.log('generateChangelog - tags = ', tags);
+        console.log('generateChangelog - tags = ', tags.map((x) => `${x.prefix}-${x.version}`));
         const baseTag = Tag.getPreviousTag(tags, headTag);
         // eslint-disable-next-line no-console
         console.log('generateChangelog - baseTag = ', baseTag);
