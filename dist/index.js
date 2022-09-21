@@ -20926,6 +20926,8 @@ function generateChangelogBuilder(githubClient, jiraClient, info) {
             return [];
         }
         const commits = await githubClient.compareTags(baseTag, headTag);
+        // eslint-disable-next-line no-console
+        console.log('generateChangelog - commits = ', commits);
         let prevIssueKeys = undefined;
         if (baseTag.minorSegment < headTag.minorSegment ||
             baseTag.majorSegment < headTag.majorSegment) {
@@ -20941,8 +20943,6 @@ function generateChangelogBuilder(githubClient, jiraClient, info) {
             // eslint-disable-next-line no-console
             console.log('generateChangelog - prevIssueKeys = ', prevIssueKeys);
         }
-        // eslint-disable-next-line no-console
-        console.log('generateChangelog - commits = ', commits);
         const changeLog = getChangeLog(commits).filter((changeLogItem) => {
             if (!changeLogItem.issueKey) {
                 return true;
