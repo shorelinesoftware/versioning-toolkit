@@ -57,10 +57,10 @@ export function addTagToJiraIssuesBuilder(
     // eslint-disable-next-line no-console
     console.log('tag = ', tag);
 
-    const changelog = await generateChangelogService({ rawHeadTag: tag.value });
+    const changelog = await generateChangelogService({ rawHeadTag: rawTag });
 
     // eslint-disable-next-line no-console
-    console.log('changelog = ', changelog);
+    console.log('addTagToJiraIssuesBuilder - changelog = ', changelog);
 
     const issuesKeys = changelog
       .filter((item) => item.existsInJira)
@@ -68,33 +68,42 @@ export function addTagToJiraIssuesBuilder(
       .filter((item): item is string => item != null);
 
     // eslint-disable-next-line no-console
-    console.log('issuesKeys = ', issuesKeys);
+    console.log('addTagToJiraIssuesBuilder - issuesKeys = ', issuesKeys);
 
     const issues = await jiraClient.getIssuesByKeys(issuesKeys);
 
     // eslint-disable-next-line no-console
-    console.log('issuesKeys = ', issuesKeys);
+    console.log('addTagToJiraIssuesBuilder - issues = ', issues);
 
     const foundIssueKeys = issues.map((i) => i.key);
 
     // eslint-disable-next-line no-console
-    console.log('foundIssueKeys = ', foundIssueKeys);
+    console.log(
+      'addTagToJiraIssuesBuilder - foundIssueKeys = ',
+      foundIssueKeys,
+    );
 
     const fields = await jiraClient.getCustomFields();
 
     // eslint-disable-next-line no-console
-    console.log('fields = ', JSON.stringify(fields));
+    console.log(
+      'addTagToJiraIssuesBuilder - fields = ',
+      JSON.stringify(fields),
+    );
 
     const tagField = fields.find(
       (field) => field.name.toLowerCase() === tagFieldName.toLowerCase(),
     );
 
     // eslint-disable-next-line no-console
-    console.log('tagField = ', JSON.stringify(tagField));
+    console.log(
+      'addTagToJiraIssuesBuilder - tagField = ',
+      JSON.stringify(tagField),
+    );
 
     if (tagField == null) {
       // eslint-disable-next-line no-console
-      console.log('tagField = null');
+      console.log('addTagToJiraIssuesBuilder - tagField = null');
       return {
         updatedIssues: [],
         allIssues: foundIssueKeys,
@@ -107,20 +116,32 @@ export function addTagToJiraIssuesBuilder(
         if (!checkIsStringArray(prevTags)) {
           // eslint-disable-next-line no-console
           console.log(
-            '!checkIsStringArray(prevTags) = ',
+            'addTagToJiraIssuesBuilder - !checkIsStringArray(prevTags) = ',
             JSON.stringify(issue),
           );
           return;
         }
         try {
           // eslint-disable-next-line no-console
-          console.log('try to update issue - tagField.id = ', tagField.id);
+          console.log(
+            'addTagToJiraIssuesBuilder - try to update issue - tagField.id = ',
+            tagField.id,
+          );
 
           const newTags = makeTags(tag, prefix, additionalTag);
 
           // eslint-disable-next-line no-console
-          console.log('newTags = ', JSON.stringify(newTags));
+          console.log(
+            'addTagToJiraIssuesBuilder - newTags = ',
+            JSON.stringify(newTags),
+          );
 
+          // eslint-disable-next-line no-console
+          console.log(
+            'addTagToJiraIssuesBuilder - before update issue = ',
+            prevTags,
+            newTags,
+          );
           await jiraClient.updateIssue(
             {
               fields: {
@@ -131,11 +152,14 @@ export function addTagToJiraIssuesBuilder(
           );
 
           // eslint-disable-next-line no-console
-          console.log('updated issue in JIRA - issue id = ', issue.id);
+          console.log(
+            'addTagToJiraIssuesBuilder - updated issue in JIRA - issue id = ',
+            issue.id,
+          );
           updatedIssues.push(issue.key);
         } catch (e) {
           // eslint-disable-next-line no-console
-          console.log('updated issue Error');
+          console.log('addTagToJiraIssuesBuilder - updated issue Error');
           if (e instanceof Error) {
             // eslint-disable-next-line no-console
             console.log('Error Message = ', e.toString());
