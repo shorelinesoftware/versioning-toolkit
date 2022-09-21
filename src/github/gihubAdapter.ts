@@ -45,6 +45,9 @@ export function getGithubAdapter(githubToken: string): GithubAdapter {
         .then(() => undefined);
     },
     compareRefs: async ({ baseRef, headRef, page, per_page }) => {
+      // eslint-disable-next-line no-console
+      console.log('compareRefs params', { baseRef, headRef, page, per_page });
+
       return await octokit.rest.repos
         .compareCommits({
           ...context.repo,
@@ -58,7 +61,14 @@ export function getGithubAdapter(githubToken: string): GithubAdapter {
             sha: commit.sha,
             message: commit.commit.message,
           })),
-        );
+        )
+        .catch((error) => {
+          // eslint-disable-next-line no-console
+          console.log('compareRefs error');
+          // eslint-disable-next-line no-console
+          console.error(error);
+          return [];
+        });
     },
   };
 }
