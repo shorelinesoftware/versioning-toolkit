@@ -20935,14 +20935,22 @@ function generateChangelogBuilder(githubClient, jiraClient, info) {
             // eslint-disable-next-line no-console
             console.log('generateChangelog - prevCommits = ', prevCommits);
             if (prevCommits.length === 0) {
+                // eslint-disable-next-line no-console
+                console.log('generateChangelog - prevCommits.length === 0 = ');
                 prevCommits = await githubClient.compareTags(
                 // in case if started tag has patch segment equal not to 0 but to 1
                 baseTag.resetPatchSegment().bumpPatchSegment(), baseTag);
+                // eslint-disable-next-line no-console
+                console.log('generateChangelog - prevCommits.length === 0 - prevCommits = ', prevCommits);
             }
+            // eslint-disable-next-line no-console
+            console.log('generateChangelog - BEFORE prevIssueKeys');
             prevIssueKeys = getChangeLog(prevCommits).map((changeLogItem) => changeLogItem.issueKey);
             // eslint-disable-next-line no-console
             console.log('generateChangelog - prevIssueKeys = ', prevIssueKeys);
         }
+        // eslint-disable-next-line no-console
+        console.log('generateChangelog - BEFORE changeLog');
         const changeLog = getChangeLog(commits).filter((changeLogItem) => {
             if (!changeLogItem.issueKey) {
                 return true;
